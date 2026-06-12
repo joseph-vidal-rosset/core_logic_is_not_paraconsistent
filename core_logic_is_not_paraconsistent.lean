@@ -13,6 +13,16 @@
    `core_logic_is_not_paraconsistent.v`. It uses only core Lean 4
    (no Mathlib dependency).
 
+   It differs from the Coq script in one presentational respect:
+   where the Coq script posits Tennant's two commitments as global
+   `Axiom`s (audited by `Print Assumptions`), this file internalises
+   them as named hypotheses of the final theorem — an equivalent
+   formulation, by the deduction theorem, with an empty axiom
+   budget: `#print axioms claim1_false` reports no non-logical
+   axiom. In this form the proof is also certified by the Lean
+   Comparator (comparator.live.lean-lang.org) against a trusted
+   challenge stating the theorem.
+
    ════════════════════════════════════════════════════════════════ -/
 
 /- The language of ℱ is the usual propositional language built from
@@ -370,27 +380,25 @@ theorem DNS1_anti_instantiated {a b : Nat} :
   intro h1 h2
   exact h1 (DNS1_inv_instantiated a b h2)
 
-/- The derivation of contradiction needs two axioms that the file
-   makes explicit and traceable. The first encodes Tennant's Claim 1
+/- The derivation of contradiction needs two hypotheses that the
+   theorem makes explicit and traceable in its own signature. The
+   first encodes Tennant's Claim 1
    (Core Logic, p. 156): the antisequent ¬A, A ⊬ B is posited as
    holding in ℂ. The second encodes the structural property of ℱ as
    a fragment shared by 𝐌 and ℂ: any antisequent rule established by
    induction on the rules of ℱ shared by 𝐌 and ℂ belongs to both
-   readings. To deny this axiom would amount to claiming that the
-   shared rules of ℱ produce consequences in 𝐌 that they do not
+   readings. To deny this hypothesis would amount to claiming that
+   the shared rules of ℱ produce consequences in 𝐌 that they do not
    produce in ℂ — which would contradict the very notion of a shared
    fragment. -/
 
-axiom Claim1_Tennant :
-  ∀ (a b : Nat),
-    Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) → False
-
-axiom min_antisequent_rule_to_core :
-  ∀ (G G' : List Formula) (C C' : Option Formula),
-    ((Derivable minimal_F G C → False) →
-     (Derivable minimal_F G' C' → False)) →
-    ((Derivable core_logic G C → False) →
-     (Derivable core_logic G' C' → False))
+/- ── Comparator note ──
+   In the original file these two hypotheses were declared as global
+   `axiom`s. The Lean Comparator rejects any axiom beyond Lean's
+   three built-ins (`propext`, `Quot.sound`, `Classical.choice`), so
+   they are internalised here as named hypotheses of the theorem.
+   The proof body is unchanged; the certified statement is now a
+   pure conditional resting on no non-logical axiom whatsoever. -/
 
 /-  (1) DNS.1-anti, established in `minimal_F` (`DNS1_anti_instantiated`),
         is lifted to `core_logic` by the rule-transfer axiom
@@ -407,7 +415,17 @@ axiom min_antisequent_rule_to_core :
     contradiction: if ℂ is consistent, it cannot be paraconsistent. ∎ -/
 
 set_option linter.unusedVariables false in
-theorem claim1_false : ∀ (a b : Nat), False := by
+theorem claim1_false
+    (Claim1_Tennant :
+      ∀ (a b : Nat),
+        Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) → False)
+    (min_antisequent_rule_to_core :
+      ∀ (G G' : List Formula) (C C' : Option Formula),
+        ((Derivable minimal_F G C → False) →
+         (Derivable minimal_F G' C' → False)) →
+        ((Derivable core_logic G C → False) →
+         (Derivable core_logic G' C' → False))) :
+    ∀ (a b : Nat), False := by
   intro a b
   -- Lift DNS.1-anti from minimal_F to core_logic.
   have Hanti_core :
@@ -424,14 +442,13 @@ theorem claim1_false : ∀ (a b : Nat), False := by
 /- ── Local note ──
    `have` introduces the intermediate proposition `Hanti_core`, the
    Core-lifted DNS.1-anti rule, proved by applying the rule-transfer
-   axiom to `DNS1_anti_instantiated`. The final term executes steps
-   (2)–(4) of the schema above.
+   hypothesis to `DNS1_anti_instantiated`. The final term executes
+   steps (2)–(4) of the schema above.
 
    To verify the axiom budget, run `#print axioms claim1_false` after
-   this theorem: the output lists exactly `Claim1_Tennant` and
-   `min_antisequent_rule_to_core`, and nothing else (plus Lean's
-   built-in `propext`, `Classical.choice`, `Quot.sound` only if any
-   of the proofs above secretly used them — they do not). -/
+   this theorem: since the two former axioms are now hypotheses of
+   the conditional statement, the output lists no non-logical axiom
+   at all — at most Lean's built-in `propext`. -/
 
 #print axioms claim1_false
 
