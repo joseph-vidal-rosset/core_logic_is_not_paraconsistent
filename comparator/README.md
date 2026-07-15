@@ -22,7 +22,7 @@ implemented kernels — Lean's own and nanoda.
   kernel enabled.
 
 Challenge SHA256:
-`f3b8542d785b97688e56d8d617b4bf69dbfab7ef6678fb35dbe4d9cfa6cbd222`
+`30567c26411331afac2312b282d302437c9a359ced0e352eea3e2aef954f67ba`
 
 ## Prerequisites
 

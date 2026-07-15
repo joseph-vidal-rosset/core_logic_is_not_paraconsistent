@@ -1,7 +1,7 @@
 {
     "challenge_module": "Challenge",
     "solution_module": "Solution",
-    "theorem_names": ["claim1_false"],
+    "theorem_names": ["anti_DNS1_holds_in_M", "anti_DNS1_refuted_in_C", "claim1_false", "claim1_false_at_0_1"],
     "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
     "enable_nanoda": true
 }
