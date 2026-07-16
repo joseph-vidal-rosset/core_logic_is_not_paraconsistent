@@ -1,24 +1,37 @@
 /- ════════════════════════════════════════════════════════════════
-   Core Logic: shared-kernel DNS.1 inversion and conditional result
+   Core Logic is not paraconsistent: the conservativity version
+   (Version 4)
    ════════════════════════════════════════════════════════════════
 
-   Version 3 distinguishes explicitly:
+   Terminology. The four rules Ax, L_neg, R_arrow, L_arrow determine
+   one fragment ℱ under two readings:
 
-     (i)  F*  : the focused shared kernel of Minimal and Core;
-     (ii) M   : the corrected membership-based minimal reading;
-     (iii) C  : the corrected membership-based Core reading,
-                obtained from the shared rules plus R_arrow_core.
+     (i)  ℱ_𝐌 : the minimal reading — the four shared rules, with
+          contexts as lists and left rules applying extensionally
+          through membership;
+     (ii) ℱ_ℂ : the Core reading — the same four rules plus
+          R_arrow_core.
 
-   In F*, DNS.1 is derivable and invertible. Its contraposition
-   yields the corresponding anti-DNS.1 rule in F*.
+   Every rule of ℱ_𝐌 is a rule of ℂ; conservativity is a relation of
+   ℂ to its own kernel. The commitment displayed in the final theorem
+   therefore imports no foreign rule into Core: it states that ℂ
+   proves nothing new at one single sequent of the shared kernel — an
+   instance of conservativity, refuted below by R_arrow_core itself.
 
-   Full Core proves DNS.2 by R_arrow_core. Consequently, the final
-   collision requires one narrowly stated interpretive commitment:
-   that Tennant's account of the shared kernel commits Core to the
-   particular Core-level anti-DNS.1 instance at issue.
+   Architecture of the result:
+     1. DNS.1 is derivable uniformly in both readings (DNS1_in_ℱ).
+     2. The anti-DNS.1 instance is a metatheorem of ℱ_𝐌
+        (anti_DNS1_holds_in_ℱ_M), proved by a direct invariant.
+     3. ℱ_ℂ proves DNS.2 through R_arrow_core, and is thereby not
+        conservative over ℱ_𝐌 at the DNS.1 instance
+        (ℱ_ℂ_not_conservative_at_DNS1).
+     4. The final theorem displays the one remaining commitment,
+        conservativity_at_DNS1, and derives the collision with
+        Claim 1 (claim1_false).
 
    There is no primitive Exchange rule and no universal transfer
-   principle for arbitrary antisequent rules.
+   principle for arbitrary antisequent rules; weakening is proved
+   admissible.
    ════════════════════════════════════════════════════════════════ -/
 
 /- ── Formulae and fragments ── -/
@@ -151,170 +164,27 @@ theorem MinToCore {G : List Formula} {C : Option Formula} :
       cases hf
 
 /- ════════════════════════════════════════════════════════════════
-   F*: focused shared kernel
+   DNS.1 in both readings
+   ════════════════════════════════════════════════════════════════
 
-   This calculus has exactly the rules shared by M and Core, but no
-   R_arrow_core. Its L_arrow rule is written in focused form, with
-   the principal implication at the head of the context.
+   DNS.1 is derivable uniformly in the fragment tag, hence in ℱ_𝐌
+   and in ℱ_ℂ alike: the derivation uses only shared rules and the
+   admissible weakening. -/
 
-   This is not an Exchange rule: no permutation constructor is
-   postulated. It is a focused presentation used to state and prove
-   DNS.1 inversion directly.
-
-   The embedding [star_to_minimal] proves that every F* derivation is
-   also derivable in the corrected membership-based minimal calculus.
-   ════════════════════════════════════════════════════════════════ -/
-
-inductive DerivableStar : List Formula → Option Formula → Prop
-  | Ax_star :
-      ∀ {G : List Formula} {A : Formula},
-        A ∈ G →
-        DerivableStar G (some A)
-
-  | L_neg_star :
-      ∀ {G : List Formula} {A : Formula},
-        Neg A ∈ G →
-        DerivableStar G (some A) →
-        DerivableStar G none
-
-  | R_arrow_star :
-      ∀ {G : List Formula} {A B : Formula},
-        DerivableStar (A :: G) (some B) →
-        DerivableStar G (some (Impl A B))
-
-  | L_arrow_star :
-      ∀ {G : List Formula} {A B : Formula} {C : Option Formula},
-        DerivableStar G (some A) →
-        DerivableStar (B :: G) C →
-        DerivableStar (Impl A B :: G) C
-
-/- Every F* derivation is derivable in the corrected membership-based
-   minimal calculus. The focused premises are lifted by weakening to
-   the larger contexts required by full L_arrow. -/
-
-theorem star_to_minimal {G : List Formula} {C : Option Formula} :
-    DerivableStar G C →
-    Derivable minimal_F G C := by
-  intro h
-  induction h with
-  | Ax_star hmem =>
-      exact Derivable.Ax hmem
-
-  | L_neg_star hneg _ ih =>
-      exact Derivable.L_neg hneg ih
-
-  | R_arrow_star _ ih =>
-      exact Derivable.R_arrow ih
-
-  | @L_arrow_star G A B C _ _ ih1 ih2 =>
-      refine @Derivable.L_arrow minimal_F (Impl A B :: G) A B C ?_ ?_ ?_
-
-      · simp
-
-      · /- Lift G ⊢ A to (A → B), G ⊢ A. -/
-        apply weakening_subset ih1
-        intro X hX
-        exact List.mem_cons.mpr (Or.inr hX)
-
-      · /- Lift B, G ⊢ C to B, (A → B), G ⊢ C. -/
-        apply weakening_subset ih2
-        intro X hX
-        rcases List.mem_cons.mp hX with hXB | hXG
-        · exact List.mem_cons.mpr (Or.inl hXB)
-        · exact
-            List.mem_cons.mpr
-              (Or.inr
-                (List.mem_cons.mpr
-                  (Or.inr hXG)))
-
-/- Consequently, F* is also contained in Core. -/
-
-theorem star_to_core {G : List Formula} {C : Option Formula} :
-    DerivableStar G C →
-    Derivable core_logic G C := by
-  intro h
-  exact MinToCore (star_to_minimal h)
-
-/- ════════════════════════════════════════════════════════════════
-   DNS.1 inside F*
-   ════════════════════════════════════════════════════════════════ -/
-
-theorem DNS1_star_instantiated (a b : Nat) :
-    DerivableStar [Var a, Neg (Var a)] (some (Var b)) →
-    DerivableStar
+theorem DNS1_in_ℱ (f : FragmentF) (a b : Nat) :
+    Derivable f [Var a, Neg (Var a)] (some (Var b)) →
+    Derivable f
       [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
       (some (Var b)) := by
   intro h
-  apply DerivableStar.L_arrow_star
-  · apply DerivableStar.R_arrow_star
-    exact h
-  · exact DerivableStar.Ax_star (by simp)
-
-/- The same F* DNS.1 derivation is therefore available in both M and
-   Core, since F* embeds into both readings. -/
-
-theorem DNS1_star_in_minimal (a b : Nat) :
-    DerivableStar [Var a, Neg (Var a)] (some (Var b)) →
-    Derivable minimal_F
-      [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
-      (some (Var b)) := by
-  intro h
-  apply star_to_minimal
-  exact DNS1_star_instantiated a b h
-
-theorem DNS1_star_in_core (a b : Nat) :
-    DerivableStar [Var a, Neg (Var a)] (some (Var b)) →
-    Derivable core_logic
-      [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
-      (some (Var b)) := by
-  intro h
-  apply star_to_core
-  exact DNS1_star_instantiated a b h
-
-/- ════════════════════════════════════════════════════════════════
-   Invertibility of DNS.1 inside F*
-   ════════════════════════════════════════════════════════════════ -/
-
-/- Since F* has no R_arrow_core constructor, an implication derivable
-   from [¬A] can only arise here through ordinary R_arrow_star. -/
-
-theorem R_arrow_inv_NegA_star (a b : Nat) :
-    DerivableStar [Neg (Var a)] (some (Impl (Var a) (Var b))) →
-    DerivableStar [Var a, Neg (Var a)] (some (Var b)) := by
-  intro h
-  cases h with
-  | Ax_star hmem =>
-      simp at hmem
-  | R_arrow_star hpremiss =>
-      exact hpremiss
-
-/- Invert the relevant F* instance of DNS.1. The index of the context
-   forces the final applicable constructor to be L_arrow_star, whose
-   left premise is [¬A] ⊢ A → B. -/
-
-theorem DNS1_inv_star_instantiated (a b : Nat) :
-    DerivableStar
-      [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
-      (some (Var b)) →
-    DerivableStar [Var a, Neg (Var a)] (some (Var b)) := by
-  intro h
-  cases h with
-  | Ax_star hmem =>
-      simp at hmem
-  | L_arrow_star hleft _ =>
-      exact R_arrow_inv_NegA_star a b hleft
-
-/- Contraposition of F*-DNS.1 inversion: anti-DNS.1 is a derived rule
-   of the shared kernel F*. -/
-
-theorem DNS1_anti_star_instantiated (a b : Nat) :
-    (DerivableStar [Var a, Neg (Var a)] (some (Var b)) → False) →
-    (DerivableStar
-       [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
-       (some (Var b)) →
-     False) := by
-  intro hPremiss hConclusion
-  exact hPremiss (DNS1_inv_star_instantiated a b hConclusion)
+  apply Derivable.L_arrow (A := Impl (Var a) (Var b)) (B := Var b)
+  · simp
+  · apply Derivable.R_arrow
+    apply weakening_subset h
+    intro A hA
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hA
+    rcases hA with h1 | h1 <;> simp [h1]
+  · exact Derivable.Ax (by simp)
 
 /- ════════════════════════════════════════════════════════════════
    Full Core: DNS.2
@@ -378,19 +248,21 @@ theorem exchange_weakening_regression (p q r : Formula) :
    Final conditional collision
    ════════════════════════════════════════════════════════════════
 
-   DNS1_anti_star_instantiated proves anti-DNS.1 in F*.
+   anti_DNS1_holds_in_ℱ_M (proved below) establishes that the
+   anti-DNS.1 instance is a metatheorem of the minimal reading ℱ_𝐌.
 
    The following narrowly scoped hypothesis is not a universal
-   antisequent-transfer axiom. It states only the disputed
-   preservation/commitment needed for this atom-instance when one
-   passes from the F* anti-rule to full Core antisequents.
+   antisequent-transfer axiom. It is one single instance of
+   conservativity of ℂ over its own kernel: the commitment that ℂ
+   proves nothing new at the DNS.1 sequent. Nothing foreign to Core
+   is involved, since every rule of ℱ_𝐌 is a rule of ℂ.
 
    This is the precise dialectical issue:
-   - syntactically, F* proves the anti-rule;
+   - syntactically, the anti-DNS.1 instance holds in ℱ_𝐌;
    - textually/philosophically, one argues that Tennant's account of
-     the shared kernel commits Core to this instance;
-   - Core's R_arrow_core proves DNS.2, producing the collision with
-     Claim 1.
+     the shared kernel commits ℂ to this conservativity instance;
+   - ℱ_ℂ proves DNS.2 through R_arrow_core, producing the collision
+     with Claim 1.
    ════════════════════════════════════════════════════════════════ -/
 
 theorem claim1_false
@@ -399,7 +271,7 @@ theorem claim1_false
         a ≠ b →
         Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) →
         False)
-    (anti_DNS1_shared :
+    (conservativity_at_DNS1 :
       ∀ a b : Nat,
         a ≠ b →
         (Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) →
@@ -413,7 +285,7 @@ theorem claim1_false
       False := by
   intro a b hab
   exact
-    anti_DNS1_shared a b hab
+    conservativity_at_DNS1 a b hab
       (Claim1_Tennant a b hab)
       (DNS2_instantiated a b (absurdity_core a))
 
@@ -425,7 +297,7 @@ theorem claim1_false_at_0_1
         a ≠ b →
         Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) →
         False)
-    (anti_DNS1_shared :
+    (conservativity_at_DNS1 :
       ∀ a b : Nat,
         a ≠ b →
         (Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) →
@@ -435,32 +307,29 @@ theorem claim1_false_at_0_1
           (some (Var b)) →
           False)) :
     False := by
-  exact claim1_false Claim1_Tennant anti_DNS1_shared 0 1 (by decide)
+  exact claim1_false Claim1_Tennant conservativity_at_DNS1 0 1 (by decide)
 
 /- Audit: no sorryAx should occur; Lean may report only [propext]. -/
 
-#print axioms DNS1_anti_star_instantiated
+#print axioms DNS1_in_ℱ
 #print axioms claim1_false
 #print axioms claim1_false_at_0_1
 /- ════════════════════════════════════════════════════════════════
    Metatheoretic supplement
    ════════════════════════════════════════════════════════════════
 
-   The embedding star_to_minimal proves F* ⊆ M only. Since
-   underivability travels downwards along an inclusion, the
-   anti-DNS.1 rule proved inside F* does not by itself yield the
-   corresponding rule for M. The following invariant closes this
-   adequacy gap: it establishes the underivability facts directly in
-   the membership-based minimal reading M, covering in particular the
-   case that F* excludes by construction, namely L_arrow firing on
-   (A → B) → B with the principal implication kept in the context.
+   The following invariant establishes the underivability facts
+   directly in ℱ_𝐌. The delicate case is L_arrow: since the principal
+   implication is located through membership, it remains available in
+   the premisses and contexts may grow; the invariant tames exactly
+   this.
 
    Invariant: for distinct atoms a and b, no context included in
    {Var a, ¬Var a, (Var a → Var b) → Var b} derives Var b or
-   Var a → Var b in M.
+   Var a → Var b in ℱ_𝐌.
    ════════════════════════════════════════════════════════════════ -/
 
-theorem M_blocked (a b : Nat) (hab : a ≠ b) :
+theorem ℱ_M_blocked (a b : Nat) (hab : a ≠ b) :
     ∀ {f : FragmentF} {G : List Formula} {C : Option Formula},
       Derivable f G C →
       f = minimal_F →
@@ -501,8 +370,8 @@ theorem M_blocked (a b : Nat) (hab : a ≠ b) :
       /- L_arrow: the principal implication can only be
          (Var a → Var b) → Var b, whose left premiss derives
          Var a → Var b from the same invariant-closed context,
-         contradicting the induction hypothesis. This is exactly the
-         case excluded in F* by consuming the principal formula. -/
+         contradicting the induction hypothesis. This is the case where
+         membership keeps the principal implication available. -/
       intro hf hS
       rcases hS _ himpl with h1 | h1 | h1
       · cases h1
@@ -515,13 +384,13 @@ theorem M_blocked (a b : Nat) (hab : a ≠ b) :
       intro hf _
       cases hf
 
-/- Consequence 1: in M itself, both the premiss and the conclusion of
-   the DNS.1 instance are underivable, unconditionally. -/
+/- Consequence 1: in ℱ_𝐌 itself, both the premiss and the conclusion
+   of the DNS.1 instance are underivable, unconditionally. -/
 
-theorem claim1_holds_in_M (a b : Nat) (hab : a ≠ b) :
+theorem claim1_holds_in_ℱ_M (a b : Nat) (hab : a ≠ b) :
     Derivable minimal_F [Var a, Neg (Var a)] (some (Var b)) → False := by
   intro h
-  refine (M_blocked a b hab h rfl ?_).1 rfl
+  refine (ℱ_M_blocked a b hab h rfl ?_).1 rfl
   intro X hX
   rcases List.mem_cons.mp hX with hX | hX
   · exact Or.inl hX
@@ -529,12 +398,12 @@ theorem claim1_holds_in_M (a b : Nat) (hab : a ≠ b) :
     · exact Or.inr (Or.inl hX)
     · cases hX
 
-theorem DNS1_conclusion_underivable_in_M (a b : Nat) (hab : a ≠ b) :
+theorem DNS1_conclusion_underivable_in_ℱ_M (a b : Nat) (hab : a ≠ b) :
     Derivable minimal_F
       [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
       (some (Var b)) → False := by
   intro h
-  refine (M_blocked a b hab h rfl ?_).1 rfl
+  refine (ℱ_M_blocked a b hab h rfl ?_).1 rfl
   intro X hX
   rcases List.mem_cons.mp hX with hX | hX
   · exact Or.inr (Or.inr hX)
@@ -542,25 +411,44 @@ theorem DNS1_conclusion_underivable_in_M (a b : Nat) (hab : a ≠ b) :
     · exact Or.inr (Or.inl hX)
     · cases hX
 
-/- Hence the anti-DNS.1 instance is a metatheorem of M itself, with
-   no detour through F*. The adequacy gap left by the one-directional
-   embedding star_to_minimal is thereby closed for this instance. -/
+/- Hence the anti-DNS.1 instance is a metatheorem of ℱ_𝐌 itself. -/
 
-theorem anti_DNS1_holds_in_M (a b : Nat) (hab : a ≠ b) :
+theorem anti_DNS1_holds_in_ℱ_M (a b : Nat) (hab : a ≠ b) :
     (Derivable minimal_F [Var a, Neg (Var a)] (some (Var b)) → False) →
     (Derivable minimal_F
       [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
       (some (Var b)) → False) :=
-  fun _ => DNS1_conclusion_underivable_in_M a b hab
+  fun _ => DNS1_conclusion_underivable_in_ℱ_M a b hab
 
-/- Consequence 2, for full Core C. First, Claim 1 holds of the
-   formalized fragment: no rule can conclude
+/- Warm-up witness. The simplest certificate of non-conservativity of
+   ℱ_ℂ over ℱ_𝐌 is the sequent ¬A ⊢ A → B: one application of
+   R_arrow_core to the inconsistency sequent derives it in ℱ_ℂ, while
+   in ℱ_𝐌 its only possible premiss is the Claim 1 sequent itself.
+   The DNS.1 instance below is the witness that matters for
+   paraconsistency; this one is the witness that is easiest to see. -/
+
+theorem non_conservativity_witness_derivable_in_ℱ_ℂ (a b : Nat) :
+    Derivable core_logic [Neg (Var a)] (some (Impl (Var a) (Var b))) :=
+  Derivable.R_arrow_core (absurdity_core a)
+
+theorem non_conservativity_witness_underivable_in_ℱ_M
+    (a b : Nat) (hab : a ≠ b) :
+    Derivable minimal_F [Neg (Var a)] (some (Impl (Var a) (Var b))) →
+    False := by
+  intro h
+  cases h with
+  | Ax hin => simp at hin
+  | R_arrow hprem => exact claim1_holds_in_ℱ_M a b hab hprem
+  | L_arrow himpl _ _ => simp at himpl
+
+/- Consequence 2, for the Core reading ℱ_ℂ. First, Claim 1 holds of
+   the formalized fragment: no rule can conclude
    [Var a, ¬Var a] ⊢ Var b when a ≠ b, since Ax requires Var b in
    the context, L_arrow requires an implication in the context, L_neg
    concludes on the empty succedent, and both right rules conclude on
    an implicational succedent. -/
 
-theorem claim1_holds_in_C (a b : Nat) (hab : a ≠ b) :
+theorem claim1_holds_in_ℱ_ℂ (a b : Nat) (hab : a ≠ b) :
     Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) → False := by
   intro h
   cases h with
@@ -575,23 +463,25 @@ theorem claim1_holds_in_C (a b : Nat) (hab : a ≠ b) :
       · cases h1
       · cases h2
 
-/- Second, C refutes the transfer of the anti-DNS.1 instance from M
-   to C: since DNS.2 is derivable in C through R_arrow_core while
-   Claim 1 holds of the fragment, the Core-level anti-DNS.1 instance
-   is false of the formalized calculus. The hypothesis
-   anti_DNS1_shared of the final theorem is therefore exactly the
-   disputed M-to-C antisequent transfer for this instance: the
-   formalization displays it, and only Tennant's own account of the
-   shared kernel can ground it. -/
+/- Second, ℱ_ℂ is not conservative over ℱ_𝐌 at the DNS.1 instance:
+   DNS.2 is derivable in ℱ_ℂ through R_arrow_core while its sequent
+   is underivable in ℱ_𝐌, so the Core-level anti-DNS.1 instance is
+   false of the formalized calculus. The hypothesis
+   conservativity_at_DNS1 of the final theorem is therefore exactly
+   the disputed instance of conservativity of ℂ over its own kernel:
+   the formalization displays it, and only Tennant's own account of
+   the shared kernel can ground it. -/
 
-theorem anti_DNS1_refuted_in_C (a b : Nat) (hab : a ≠ b) :
+theorem ℱ_ℂ_not_conservative_at_DNS1 (a b : Nat) (hab : a ≠ b) :
     ¬ ( (Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) → False) →
         (Derivable core_logic
           [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
           (some (Var b)) → False) ) := by
   intro h
-  exact h (claim1_holds_in_C a b hab)
+  exact h (claim1_holds_in_ℱ_ℂ a b hab)
           (DNS2_instantiated a b (absurdity_core a))
 
-#print axioms anti_DNS1_holds_in_M
-#print axioms anti_DNS1_refuted_in_C
+#print axioms non_conservativity_witness_derivable_in_ℱ_ℂ
+#print axioms non_conservativity_witness_underivable_in_ℱ_M
+#print axioms anti_DNS1_holds_in_ℱ_M
+#print axioms ℱ_ℂ_not_conservative_at_DNS1

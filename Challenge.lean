@@ -1,30 +1,37 @@
 /- ════════════════════════════════════════════════════════════════
-   CHALLENGE — Core Logic: Version 3 with metatheoretic supplement
+   CHALLENGE — Core Logic is not paraconsistent: conservativity
+   version (Version 4)
    ════════════════════════════════════════════════════════════════
 
    Trusted statements for the Lean Comparator.
+
+   Terminology. The four rules Ax, L_neg, R_arrow, L_arrow determine
+   one fragment ℱ under two readings: ℱ_𝐌, its minimal reading, and
+   ℱ_ℂ, its Core reading, which adds R_arrow_core. Every rule of ℱ_𝐌
+   is a rule of ℂ; conservativity is a relation of ℂ to its own
+   kernel, so nothing foreign to Core is involved anywhere below.
 
    The trusted base consists of the corrected full calculus:
    - contexts are represented by lists;
    - left rules apply extensionally through membership;
    - there is no primitive Exchange rule;
-   - R_arrow_core is available only in Core.
+   - R_arrow_core is available only in the Core reading.
 
    Four results are to be certified.
 
-   (1) anti_DNS1_holds_in_M: the anti-DNS.1 instance is a
-       metatheorem of the minimal reading M itself — both the
+   (1) anti_DNS1_holds_in_ℱ_M: the anti-DNS.1 instance is a
+       metatheorem of the minimal reading ℱ_𝐌 itself — both the
        premiss and the conclusion of the DNS.1 instance are
-       underivable in M for distinct atoms.
+       underivable in ℱ_𝐌 for distinct atoms.
 
-   (2) anti_DNS1_refuted_in_C: full Core refutes the transfer of
-       this anti-DNS.1 instance from M to C, since DNS.2 is
-       derivable in C through R_arrow_core while Claim 1 holds of
+   (2) ℱ_ℂ_not_conservative_at_DNS1: the Core reading is not
+       conservative over ℱ_𝐌 at the DNS.1 instance — DNS.2 is
+       derivable in ℱ_ℂ through R_arrow_core while Claim 1 holds of
        the formalized fragment.
 
    (3) claim1_false: the conditional collision — Tennant's Claim 1
-       (restricted to distinct atoms) and the Core-level anti-DNS.1
-       commitment jointly entail False.
+       (restricted to distinct atoms) and the conservativity
+       commitment at the DNS.1 instance jointly entail False.
 
    (4) claim1_false_at_0_1: the closed instance at atoms 0 and 1.
 
@@ -89,13 +96,13 @@ inductive Derivable : FragmentF → List Formula → Option Formula → Prop
         Derivable core_logic (A :: G) none →
         Derivable core_logic G (some (Impl A B))
 
-theorem anti_DNS1_holds_in_M (a b : Nat) (hab : a ≠ b) :
+theorem anti_DNS1_holds_in_ℱ_M (a b : Nat) (hab : a ≠ b) :
     (Derivable minimal_F [Var a, Neg (Var a)] (some (Var b)) → False) →
     (Derivable minimal_F
       [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
       (some (Var b)) → False) := sorry
 
-theorem anti_DNS1_refuted_in_C (a b : Nat) (hab : a ≠ b) :
+theorem ℱ_ℂ_not_conservative_at_DNS1 (a b : Nat) (hab : a ≠ b) :
     ¬ ( (Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) → False) →
         (Derivable core_logic
           [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
@@ -107,7 +114,7 @@ theorem claim1_false
         a ≠ b →
         Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) →
         False)
-    (anti_DNS1_shared :
+    (conservativity_at_DNS1 :
       ∀ a b : Nat,
         a ≠ b →
         (Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) →
@@ -126,7 +133,7 @@ theorem claim1_false_at_0_1
         a ≠ b →
         Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) →
         False)
-    (anti_DNS1_shared :
+    (conservativity_at_DNS1 :
       ∀ a b : Nat,
         a ≠ b →
         (Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) →
