@@ -1,52 +1,39 @@
 (* ════════════════════════════════════════════════════════════════
    Core Logic is not paraconsistent: the refutation-system version
-   (Version 5)
+   (Version 6 — the arXiv/AJL appendix file)
    ════════════════════════════════════════════════════════════════
 
-   Terminology. The four rules Ax, L_neg, R_arrow, L_arrow determine
-   one fragment ℱ under two readings:
+   This file certifies, block by block, the four-step proof of the
+   paper. The blocks correspond to the steps as follows.
 
-     (i)  ℱ_𝐌 : the minimal reading — the four shared rules, with
-          contexts as lists and left rules applying extensionally
-          through membership;
-     (ii) ℱ_ℂ : the Core reading — the same four rules plus
-          R_arrow_core.
+     Block A — the language and the calculus: one fragment ℱ (rules
+        Ax, L¬, R→, L→) under two readings, ℱ_𝐌 (minimal) and ℱ_ℂ
+        (Core, adding R→ℂ). Section 2.1 of the paper.
+     Block B — Step 1: DNS.1 and DNS.2 are derivable. Section 2.2.
+     Block C — Step 2: DNS.1 is invertible in ℱ_𝐌, by structural
+        induction on derivations. Section 2.3.
+     Block D — Step 3: the refutation rule anti-DNS.1, contrapositive
+        of the invertibility, and the refutation system in the sense
+        of Łukasiewicz, Tiomkin and Goranko: Claim 1 as its only
+        rejection axiom, anti-DNS.1 as its only refutation rule,
+        Ł-correct for ℱ_𝐌. Section 2.4.
+     Block E — Step 4: the contradiction. The same refutation system
+        is Ł-incorrect for ℱ_ℂ, and the conditional collision theorem
+        derives False from the two displayed commitments. Section 2.5.
+     Block F — the status of the second commitment: the fragment
+        verifies Claim 1, and refutes the commitment through R→ℂ.
+        Reply to the anticipated objection, Section 2.5.
 
-   Every rule of ℱ_𝐌 is a rule of ℂ. The commitment displayed in
-   the final theorem therefore imports no foreign rule into Core: it
-   states that the refutation rule licensed by the kernel's own
-   invertibility — anti-DNS.1 — governs ℂ's rejection assertion at
-   one single sequent. That commitment is refuted below by
-   R_arrow_core itself.
-
-   Architecture of the result:
-     1. DNS.1 is derivable uniformly in both readings (DNS1_in_ℱ).
-     2. DNS.1 is invertible at the decisive instance in ℱ_𝐌
-        (DNS1_invertible_at_decisive_instance_in_ℱ_M), and the
-        anti-DNS.1 instance is its contrapositive
-        (anti_DNS1_holds_in_ℱ_M): in the sense of Łukasiewicz and
-        Goranko, a refutation rule licensed by the correctness of
-        its converse — not a meta-rule imported from outside, but a
-        rule dormant in the shadow of the kernel.
-     3. The refutation system with Claim 1 as its only rejection
-        axiom and anti-DNS.1 as its only refutation rule is
-        Ł-correct for ℱ_𝐌 and Ł-incorrect for ℱ_ℂ, the
-        incorrectness being produced by R_arrow_core alone
-        (refutation_system_Ł_correct_for_ℱ_M,
-        refutation_system_Ł_incorrect_for_ℱ_ℂ).
-     4. The final theorem displays the one remaining commitment,
-        anti_DNS1_rule_for_ℂ (named conservativity_at_DNS1 in Version 4), and
-        derives the collision with Claim 1 (claim1_false).
-
-   There is no primitive Exchange rule and no universal transfer
-   principle for arbitrary antisequent rules; weakening is proved
-   admissible.
+   Verification: every Print Assumptions at the end of this file
+   returns "Closed under the global context" — nothing is assumed;
+   the two principles the argument grants to Tennant are explicit
+   hypotheses of the final theorem, not axioms.
    ════════════════════════════════════════════════════════════════ *)
+
+(* ══ Block A — Language and calculus ══ *)
 
 From Coq Require Import List ListSet.
 Import ListNotations.
-
-(* ── Formulae and fragments ── *)
 
 Inductive formula : Type :=
   | Var  : nat -> formula
@@ -58,15 +45,11 @@ Inductive fragment_F : Type :=
   | core_logic.
 
 (* [Some A] is a one-formula succedent.
-   [None] is the empty succedent. *)
-
-(* ════════════════════════════════════════════════════════════════
-   Full corrected calculus
-
-   Contexts are technically lists, but L_neg and L_arrow locate their
-   principal formula extensionally by membership. No Exchange
-   constructor is present.
-   ════════════════════════════════════════════════════════════════ *)
+   [None] is the empty succedent.
+   Contexts are technically lists, but the left rules locate their
+   principal formula extensionally, by membership: no structural
+   rule is primitive. An antisequent Γ ⊬ C is rendered directly as
+   the type [derivable f G C -> False]. *)
 
 Inductive derivable :
   fragment_F -> set formula -> option formula -> Prop :=
@@ -99,9 +82,27 @@ Inductive derivable :
         derivable core_logic (A :: G) None ->
         derivable core_logic G (Some (Impl A B)).
 
-(* ── Structural admissibility: weakening ── *)
+(* ══ Block B — Step 1: DNS.1 and DNS.2 are derivable ══ *)
 
-Lemma weakening_subset :
+(* Context monotonicity. This lemma is NOT Tennant's Weakening —
+   no such rule exists in ℂ, and none is added here — and it is
+   NEITHER Cut NOR transitivity: no two derivations are composed,
+   no cut formula exists, no formula is eliminated. It rebuilds ONE
+   derivation, unchanged and height-preservingly, in a larger pool
+   of available assumptions. Its ground is the set convention on
+   contexts: [derivable f G C] says that some subsequent Δ ⊆ G is
+   Tennant-derivable ⊢ C, so extending the pool is deductively
+   inert — it is the very junction of contexts (Δ, Γ) that
+   Tennant's own rule L→ performs notationally when it introduces
+   its principal formula beside the contexts of its premisses.
+   Safety is two-directional: the monotone encoding derives MORE
+   sequents than Tennant's strict reading, so every underivability
+   proved below holds a fortiori of the strict reading; and the
+   derivable witness of the collision uses every formula of its
+   context, so no dilution slack is exploited on the positive side.
+   Proof by induction on the derivation. *)
+
+Lemma context_monotonicity :
   forall f G G' C,
     derivable f G C ->
     (forall A, In A G -> In A G') ->
@@ -110,94 +111,48 @@ Proof.
   intros f G G' C HD.
   revert G'.
   induction HD; intros G' Hsub.
-  - apply Ax.
-    apply Hsub.
-    exact H.
-
+  - apply Ax. apply Hsub. exact H.
   - apply L_neg with (A := A).
-    + apply Hsub.
-      exact H.
-    + apply IHHD.
-      exact Hsub.
-
+    + apply Hsub. exact H.
+    + apply IHHD. exact Hsub.
   - apply R_arrow.
     apply IHHD.
-    intros X HX.
-    simpl in HX |- *.
+    intros X HX. simpl in HX |- *.
     destruct HX as [HX | HX].
-    + left.
-      exact HX.
-    + right.
-      apply Hsub.
-      exact HX.
-
+    + left. exact HX.
+    + right. apply Hsub. exact HX.
   - apply L_arrow with (A := A) (B := B).
-    + apply Hsub.
-      exact H.
-    + apply IHHD1.
-      exact Hsub.
+    + apply Hsub. exact H.
+    + apply IHHD1. exact Hsub.
     + apply IHHD2.
-      intros X HX.
-      simpl in HX |- *.
+      intros X HX. simpl in HX |- *.
       destruct HX as [HX | HX].
-      * left.
-        exact HX.
-      * right.
-        apply Hsub.
-        exact HX.
-
+      * left. exact HX.
+      * right. apply Hsub. exact HX.
   - apply R_arrow_core.
     apply IHHD.
-    intros X HX.
-    simpl in HX |- *.
+    intros X HX. simpl in HX |- *.
     destruct HX as [HX | HX].
-    + left.
-      exact HX.
-    + right.
-      apply Hsub.
-      exact HX.
+    + left. exact HX.
+    + right. apply Hsub. exact HX.
 Qed.
 
-(* Every minimal derivation can be replayed in Core because the first
-   four full-calculus rules are shared. *)
+(* The inconsistency sequent ¬A, A ⊢ that feeds DNS.2, immediate
+   since L¬ locates ¬A by membership. *)
 
-Lemma MinToCore :
-  forall G C,
-    derivable minimal_F G C ->
-    derivable core_logic G C.
+Lemma absurdity_core :
+  forall a : nat,
+    derivable core_logic [Var a; Neg (Var a)] None.
 Proof.
-  intros G C HD.
-  remember minimal_F as f eqn:Hf.
-  induction HD.
-  - apply Ax.
-    exact H.
-
-  - apply L_neg with (A := A).
-    + exact H.
-    + apply IHHD.
-      exact Hf.
-
-  - apply R_arrow.
-    apply IHHD.
-    exact Hf.
-
-  - apply L_arrow with (A := A) (B := B).
-    + exact H.
-    + apply IHHD1.
-      exact Hf.
-    + apply IHHD2.
-      exact Hf.
-
-  - discriminate Hf.
+  intro a.
+  apply L_neg with (A := Var a).
+  - simpl. right. left. reflexivity.
+  - apply Ax. simpl. left. reflexivity.
 Qed.
 
-(* ════════════════════════════════════════════════════════════════
-   DNS.1 in both readings
-   ════════════════════════════════════════════════════════════════
-
-   DNS.1 is derivable uniformly in the fragment tag, hence in ℱ_𝐌
-   and in ℱ_ℂ alike: the derivation uses only shared rules and the
-   admissible weakening. *)
+(* DNS.1, proved uniformly in the fragment indicator f, hence at
+   once in ℱ_𝐌 and in ℱ_ℂ: its derivation uses only the four shared
+   rules and context monotonicity. *)
 
 Theorem DNS1_in_ℱ :
   forall (f : fragment_F) (a b : nat),
@@ -210,41 +165,16 @@ Proof.
   eapply L_arrow.
   - left. reflexivity.
   - apply R_arrow.
-    eapply weakening_subset.
+    eapply context_monotonicity.
     + exact H.
-    + intros X HX.
-      simpl in HX.
+    + intros X HX. simpl in HX.
       destruct HX as [HX | [HX | []]]; subst X.
       * left. reflexivity.
       * right. right. left. reflexivity.
   - apply Ax. left. reflexivity.
 Qed.
 
-(* ════════════════════════════════════════════════════════════════
-   Full Core: DNS.2
-   ════════════════════════════════════════════════════════════════ *)
-
-(* The inconsistency sequent {A, ¬A} |- is derivable in full Core.
-   L_neg uses membership, hence no Exchange is needed. *)
-
-Lemma absurdity_core :
-  forall a : nat,
-    derivable core_logic [Var a; Neg (Var a)] None.
-Proof.
-  intro a.
-  apply L_neg with (A := Var a).
-  - simpl.
-    right.
-    left.
-    reflexivity.
-  - apply Ax.
-    simpl.
-    left.
-    reflexivity.
-Qed.
-
-(* DNS.2 is the Core-specific counterpart. The only extra rule used
-   is R_arrow_core. *)
+(* DNS.2 in the Core reading, through R→ℂ. *)
 
 Theorem DNS2_instantiated :
   forall a b : nat,
@@ -257,104 +187,255 @@ Proof.
   apply L_arrow with
     (A := Impl (Var a) (Var b))
     (B := Var b).
-
-  - simpl.
-    left.
-    reflexivity.
-
-  - eapply weakening_subset.
-    + apply R_arrow_core.
-      exact HD.
-    + intros X HX.
-      simpl in HX |- *.
+  - simpl. left. reflexivity.
+  - eapply context_monotonicity.
+    + apply R_arrow_core. exact HD.
+    + intros X HX. simpl in HX |- *.
       destruct HX as [HX | []].
-      right.
-      left.
-      exact HX.
-
-  - apply Ax.
-    simpl.
-    left.
-    reflexivity.
+      right. left. exact HX.
+  - apply Ax. simpl. left. reflexivity.
 Qed.
 
-(* Regression: no primitive Exchange is needed to derive
-   (p -> q -> r) -> q -> p -> r in the corrected minimal calculus. *)
+(* ══ Block C — Step 2: DNS.1 is invertible in ℱ_𝐌 ══ *)
 
-Theorem exchange_weakening_regression :
-  forall p q r : formula,
-    derivable minimal_F []
-      (Some
-        (Impl (Impl p (Impl q r))
-          (Impl q (Impl p r)))).
+(* The inversion lemma, by structural induction on derivations —
+   von Plato's method, adapted to extensional contexts: since the
+   left rules locate their principal formula by membership, the
+   principal implication remains available in the premisses and
+   contexts may grow; the induction is therefore carried under an
+   invariant on contexts included in {A, ¬A, (A→B)→B}, and it
+   establishes that no ℱ_𝐌-derivation from such a context concludes
+   B or A→B. The case R_arrow_core is excluded by typing
+   (discriminate Hf): the Coq counterpart of Tennant's consistency
+   proviso for contexts. *)
+
+Lemma DNS1_inversion_lemma :
+  forall a b : nat,
+    a <> b ->
+    forall f G C,
+      derivable f G C ->
+      f = minimal_F ->
+      (forall X, In X G ->
+        X = Var a \/ X = Neg (Var a) \/
+        X = Impl (Impl (Var a) (Var b)) (Var b)) ->
+      C <> Some (Var b) /\ C <> Some (Impl (Var a) (Var b)).
 Proof.
-  intros p q r.
-  apply R_arrow.
-  apply R_arrow.
-  apply R_arrow.
+  intros a b Hab f G C HD.
+  induction HD; intros Hf HS.
 
-  apply L_arrow with
-    (A := p)
-    (B := Impl q r).
+  - (* Ax: the succedent is a member of the context, hence one of
+       the three formulas of the invariant; none of them is Var b or
+       Var a -> Var b when a <> b. *)
+    destruct (HS A H) as [H1 | [H1 | H1]]; subst A;
+      split; intro HC; congruence.
 
-  - simpl.
-    right.
-    right.
-    left.
-    reflexivity.
+  - (* L_neg: empty succedent. *)
+    split; intro HC; discriminate.
 
-  - apply Ax.
-    simpl.
-    left.
-    reflexivity.
-
-  - apply L_arrow with
-      (A := q)
-      (B := r).
-
-    + simpl.
-      left.
+  - (* R_arrow: if the succedent were Var a -> Var b, the premiss
+       would derive Var b from an invariant-closed context. *)
+    split; intro HC.
+    + discriminate.
+    + injection HC as HA HB.
+      subst A B.
+      assert (HS' : forall X, In X (Var a :: G) ->
+        X = Var a \/ X = Neg (Var a) \/
+        X = Impl (Impl (Var a) (Var b)) (Var b)).
+      { intros X [HX | HX].
+        - left. symmetry. exact HX.
+        - apply HS. exact HX. }
+      destruct (IHHD Hf HS') as [Hcontr _].
+      apply Hcontr.
       reflexivity.
 
-    + apply Ax.
-      simpl.
-      right.
-      right.
-      left.
-      reflexivity.
+  - (* L_arrow: the principal implication can only be
+       (Var a -> Var b) -> Var b, whose left premiss derives
+       Var a -> Var b from the same invariant-closed context,
+       contradicting the induction hypothesis. This is the case
+       where membership keeps the principal implication available. *)
+    destruct (HS _ H) as [H1 | [H1 | H1]]; try discriminate.
+    injection H1 as HA HB.
+    subst A B.
+    destruct (proj2 (IHHD1 Hf HS) eq_refl).
 
-    + apply Ax.
-      simpl.
-      left.
-      reflexivity.
+  - (* R_arrow_core does not belong to ℱ_𝐌. *)
+    discriminate Hf.
 Qed.
 
-(* ════════════════════════════════════════════════════════════════
-   Final conditional collision
-   ════════════════════════════════════════════════════════════════
+(* First corollary: the invertibility of DNS.1 at the decisive
+   instance is a metatheorem of ℱ_𝐌. *)
 
-   anti_DNS1_holds_in_ℱ_M (proved below) establishes that the
-   anti-DNS.1 instance is the contrapositive of the invertibility
-   of DNS.1 in the minimal reading ℱ_𝐌.
+Theorem DNS1_invertible_at_decisive_instance_in_ℱ_M :
+  forall a b : nat,
+    a <> b ->
+    derivable minimal_F
+      [Impl (Impl (Var a) (Var b)) (Var b); Neg (Var a)]
+      (Some (Var b)) ->
+    derivable minimal_F [Var a; Neg (Var a)] (Some (Var b)).
+Proof.
+  intros a b Hab HD.
+  assert (HS : forall X,
+      In X [Impl (Impl (Var a) (Var b)) (Var b); Neg (Var a)] ->
+      X = Var a \/ X = Neg (Var a) \/
+      X = Impl (Impl (Var a) (Var b)) (Var b)).
+  { intros X HX.
+    simpl in HX.
+    destruct HX as [HX | [HX | []]]; subst X.
+    - right. right. reflexivity.
+    - right. left. reflexivity. }
+  (* The antecedent is refuted by the inversion lemma; the final
+     step is a case analysis with zero cases on the resulting proof
+     of False — the empty recursor of the inductive type False, not
+     an ex falso axiom: the object calculus has no ⊥ and no such
+     rule. *)
+  destruct (proj1 (DNS1_inversion_lemma a b Hab _ _ _ HD eq_refl HS)
+              eq_refl).
+Qed.
 
-   The hypothesis anti_DNS1_rule_for_ℂ — named conservativity_at_DNS1 in
-   Version 4 — is not a universal antisequent-transfer axiom and
-   not a meta-rule. It is the kernel's own refutation rule, stated
-   for the Core reading: in Goranko's discipline a refutation rule
-   is licensed by the correctness of its converse, and its converse
-   here is the invertibility of DNS.1, certified for ℱ_𝐌 below.
-   Nothing foreign to Core is involved, since every rule of ℱ_𝐌 is
-   a rule of ℂ.
+(* Second corollary: Claim 1 holds of ℱ_𝐌 — the premiss of the
+   DNS.1 instance is underivable there, unconditionally, for
+   distinct atoms. *)
 
-   This is the precise dialectical issue:
-   - syntactically, anti-DNS.1 holds in ℱ_𝐌 as the contrapositive
-     of a certified invertibility;
-   - a rejection assertion has inferential content only inside a
-     refutation system (Łukasiewicz); the smallest one the kernel
-     licenses contains exactly this rule;
-   - ℱ_ℂ proves DNS.2 through R_arrow_core, producing the collision
-     with Claim 1.
-   ════════════════════════════════════════════════════════════════ *)
+Theorem claim1_holds_in_ℱ_M :
+  forall a b : nat,
+    a <> b ->
+    derivable minimal_F [Var a; Neg (Var a)] (Some (Var b)) ->
+    False.
+Proof.
+  intros a b Hab HD.
+  refine (proj1 (DNS1_inversion_lemma a b Hab _ _ _ HD eq_refl _)
+            eq_refl).
+  intros X HX.
+  simpl in HX.
+  destruct HX as [HX | [HX | []]]; subst X.
+  - left. reflexivity.
+  - right. left. reflexivity.
+Qed.
+
+(* Third corollary: the conclusion of the DNS.1 instance is
+   underivable in ℱ_𝐌 as well. *)
+
+Theorem DNS1_conclusion_underivable_in_ℱ_M :
+  forall a b : nat,
+    a <> b ->
+    derivable minimal_F
+      [Impl (Impl (Var a) (Var b)) (Var b); Neg (Var a)]
+      (Some (Var b)) ->
+    False.
+Proof.
+  intros a b Hab HD.
+  refine (proj1 (DNS1_inversion_lemma a b Hab _ _ _ HD eq_refl _)
+            eq_refl).
+  intros X HX.
+  simpl in HX.
+  destruct HX as [HX | [HX | []]]; subst X.
+  - right. right. reflexivity.
+  - right. left. reflexivity.
+Qed.
+
+(* ══ Block D — Step 3: the refutation rule anti-DNS.1 and the
+   refutation system ══ *)
+
+(* Anti-DNS.1 holds in ℱ_𝐌 as the CONTRAPOSITIVE of the certified
+   invertibility — Goranko's correctness discipline for refutation
+   calculi: a refutation rule is licensed by the correctness of its
+   converse. Anti-DNS.1 is therefore not a meta-rule imported into
+   the kernel: it is a rule derivable from the kernel's own
+   invertibility, dormant in the shadow of the system. *)
+
+Theorem anti_DNS1_holds_in_ℱ_M :
+  forall a b : nat,
+    a <> b ->
+    (derivable minimal_F [Var a; Neg (Var a)] (Some (Var b)) ->
+     False) ->
+    (derivable minimal_F
+       [Impl (Impl (Var a) (Var b)) (Var b); Neg (Var a)]
+       (Some (Var b)) ->
+     False).
+Proof.
+  intros a b Hab Hprem HD.
+  apply Hprem.
+  apply (DNS1_invertible_at_decisive_instance_in_ℱ_M a b Hab).
+  exact HD.
+Qed.
+
+(* The refutation system, in the sense of Łukasiewicz, Tiomkin
+   (1988) and Goranko (Studia Logica 53, 1994): a deductive system
+   for NON-provability, made of rejection axioms and refutation
+   rules. Below, the smallest refutation system that the kernel
+   licenses: Claim 1 as its only rejection axiom, anti-DNS.1 as its
+   only refutation rule — the converse of the latter being the
+   certified DNS1_invertible_at_decisive_instance_in_ℱ_M. *)
+
+Inductive refutable : set formula -> option formula -> Prop :=
+
+  | claim1_axiom :
+      forall a b,
+        a <> b ->
+        refutable [Var a; Neg (Var a)] (Some (Var b))
+
+  | anti_DNS1 :
+      forall a b,
+        refutable [Var a; Neg (Var a)] (Some (Var b)) ->
+        refutable
+          [Impl (Impl (Var a) (Var b)) (Var b); Neg (Var a)]
+          (Some (Var b)).
+
+(* Ł-correctness for ℱ_𝐌: everything the refutation system rejects
+   is underivable in the minimal reading. Induction on the
+   refutation derivation; both cases discharge through the
+   inversion lemma. *)
+
+Theorem refutation_system_Ł_correct_for_ℱ_M :
+  forall G C,
+    refutable G C ->
+    derivable minimal_F G C ->
+    False.
+Proof.
+  intros G C HR.
+  induction HR; intro HD.
+  - exact (claim1_holds_in_ℱ_M a b H HD).
+  - inversion HR; subst;
+    match goal with
+    | Hab : a <> b |- _ =>
+        exact (DNS1_conclusion_underivable_in_ℱ_M a b Hab HD)
+    end.
+Qed.
+
+(* ══ Block E — Step 4: the contradiction ══ *)
+
+(* Ł-incorrectness for ℱ_ℂ: the same refutation system rejects a
+   sequent that the Core reading derives, the witness being produced
+   by R→ℂ alone. A rejection assertion has inferential content only
+   inside a refutation system; the smallest one available to Core's
+   kernel rejects what Core proves. This is the certified form of
+   the contradiction involved in asserting Claim 1. *)
+
+Theorem refutation_system_Ł_incorrect_for_ℱ_ℂ :
+  exists G C,
+    refutable G C /\ derivable core_logic G C.
+Proof.
+  exists [Impl (Impl (Var 0) (Var 1)) (Var 1); Neg (Var 0)].
+  exists (Some (Var 1)).
+  split.
+  - apply anti_DNS1.
+    apply claim1_axiom.
+    discriminate.
+  - apply DNS2_instantiated.
+    apply absurdity_core.
+Qed.
+
+(* The conditional collision theorem. False is derived from two
+   NAMED HYPOTHESES and the proved lemmas of this file — no axiom
+   is declared anywhere. The first hypothesis states Claim 1,
+   restricted to distinct atoms (so that the axiom rule cannot
+   trivialise it), as Tennant posits it. The second,
+   anti_DNS1_rule_for_ℂ, states that the kernel's refutation rule
+   anti-DNS.1 governs ℂ's rejection assertion at this single
+   sequent — in Goranko's discipline, that the licence of the rule,
+   the invertibility of DNS.1 certified above for the kernel,
+   survives in ℂ's own reading. Nothing foreign to Core is involved,
+   since every rule of ℱ_𝐌 is a rule of ℂ. *)
 
 Theorem claim1_false :
   forall
@@ -385,7 +466,8 @@ Proof.
     apply absurdity_core.
 Qed.
 
-(* Closed instance at distinct atoms 0 and 1. *)
+(* A closed instance at the concrete atoms 0 and 1 discharges the
+   last quantifiers. *)
 
 Corollary claim1_false_at_0_1 :
   forall
@@ -408,203 +490,18 @@ Corollary claim1_false_at_0_1 :
     False.
 Proof.
   intros Claim1_Tennant anti_DNS1_rule_for_ℂ.
-  apply
-    (claim1_false Claim1_Tennant anti_DNS1_rule_for_ℂ 0 1).
+  apply (claim1_false Claim1_Tennant anti_DNS1_rule_for_ℂ 0 1).
   discriminate.
 Qed.
 
-(* The first theorem must be assumption-free. The final two results
-   must depend only on their explicit theorem parameters. *)
+(* ══ Block F — Status of the second commitment ══ *)
 
-Print Assumptions DNS1_in_ℱ.
-Print Assumptions claim1_false.
-Print Assumptions claim1_false_at_0_1.
-
-(* ════════════════════════════════════════════════════════════════
-   Metatheoretic supplement
-   ════════════════════════════════════════════════════════════════
-
-   The following invariant establishes the underivability facts
-   directly in ℱ_𝐌. The delicate case is L_arrow: since the principal
-   implication is located through membership, it remains available in
-   the premisses and contexts may grow; the invariant tames exactly
-   this.
-
-   Invariant: for distinct atoms a and b, no context included in
-   {Var a, ¬Var a, (Var a → Var b) → Var b} derives Var b or
-   Var a → Var b in ℱ_𝐌.
-   ════════════════════════════════════════════════════════════════ *)
-
-Lemma ℱ_M_blocked :
-  forall a b : nat,
-    a <> b ->
-    forall f G C,
-      derivable f G C ->
-      f = minimal_F ->
-      (forall X, In X G ->
-        X = Var a \/ X = Neg (Var a) \/
-        X = Impl (Impl (Var a) (Var b)) (Var b)) ->
-      C <> Some (Var b) /\ C <> Some (Impl (Var a) (Var b)).
-Proof.
-  intros a b Hab f G C HD.
-  induction HD; intros Hf HS.
-
-  - (* Ax: the succedent is a member of the context, hence one of the
-       three formulas of the invariant; none of them is Var b or
-       Var a -> Var b when a <> b. *)
-    destruct (HS A H) as [H1 | [H1 | H1]]; subst A;
-      split; intro HC; congruence.
-
-  - (* L_neg: empty succedent. *)
-    split; intro HC; discriminate.
-
-  - (* R_arrow: if the succedent were Var a -> Var b, the premiss
-       would derive Var b from an invariant-closed context. *)
-    split; intro HC.
-    + discriminate.
-    + injection HC as HA HB.
-      subst A B.
-      assert (HS' : forall X, In X (Var a :: G) ->
-        X = Var a \/ X = Neg (Var a) \/
-        X = Impl (Impl (Var a) (Var b)) (Var b)).
-      { intros X [HX | HX].
-        - left. symmetry. exact HX.
-        - apply HS. exact HX. }
-      destruct (IHHD Hf HS') as [Hcontr _].
-      apply Hcontr.
-      reflexivity.
-
-  - (* L_arrow: the principal implication can only be
-       (Var a -> Var b) -> Var b, whose left premiss derives
-       Var a -> Var b from the same invariant-closed context,
-       contradicting the induction hypothesis. This is the case where
-       membership keeps the principal implication available. *)
-    destruct (HS _ H) as [H1 | [H1 | H1]]; try discriminate.
-    injection H1 as HA HB.
-    subst A B.
-    exfalso.
-    apply (proj2 (IHHD1 Hf HS)).
-    reflexivity.
-
-  - (* R_arrow_core does not belong to M. *)
-    discriminate Hf.
-Qed.
-
-(* Consequence 1: in ℱ_𝐌 itself, both the premiss and the conclusion
-   of the DNS.1 instance are underivable, unconditionally. *)
-
-Theorem claim1_holds_in_ℱ_M :
-  forall a b : nat,
-    a <> b ->
-    derivable minimal_F [Var a; Neg (Var a)] (Some (Var b)) ->
-    False.
-Proof.
-  intros a b Hab HD.
-  refine (proj1 (ℱ_M_blocked a b Hab _ _ _ HD eq_refl _) eq_refl).
-  intros X HX.
-  simpl in HX.
-  destruct HX as [HX | [HX | []]]; subst X.
-  - left. reflexivity.
-  - right. left. reflexivity.
-Qed.
-
-Theorem DNS1_conclusion_underivable_in_ℱ_M :
-  forall a b : nat,
-    a <> b ->
-    derivable minimal_F
-      [Impl (Impl (Var a) (Var b)) (Var b); Neg (Var a)]
-      (Some (Var b)) ->
-    False.
-Proof.
-  intros a b Hab HD.
-  refine (proj1 (ℱ_M_blocked a b Hab _ _ _ HD eq_refl _) eq_refl).
-  intros X HX.
-  simpl in HX.
-  destruct HX as [HX | [HX | []]]; subst X.
-  - right. right. reflexivity.
-  - right. left. reflexivity.
-Qed.
-
-(* The invertibility of DNS.1 at the decisive instance is a
-   metatheorem of ℱ_𝐌, established through the invariant. *)
-
-Theorem DNS1_invertible_at_decisive_instance_in_ℱ_M :
-  forall a b : nat,
-    a <> b ->
-    derivable minimal_F
-      [Impl (Impl (Var a) (Var b)) (Var b); Neg (Var a)]
-      (Some (Var b)) ->
-    derivable minimal_F [Var a; Neg (Var a)] (Some (Var b)).
-Proof.
-  intros a b Hab HD.
-  exfalso.
-  exact (DNS1_conclusion_underivable_in_ℱ_M a b Hab HD).
-Qed.
-
-(* Hence the anti-DNS.1 instance holds in ℱ_𝐌 as the CONTRAPOSITIVE
-   of this invertibility — Goranko's converse-rule discipline: a
-   refutation rule is licensed by the correctness of its converse.
-   Anti-DNS.1 is therefore not a meta-rule imported into the
-   kernel; it is a rule derivable from the kernel's invertibility,
-   dormant in the shadow of the system. *)
-
-Theorem anti_DNS1_holds_in_ℱ_M :
-  forall a b : nat,
-    a <> b ->
-    (derivable minimal_F [Var a; Neg (Var a)] (Some (Var b)) ->
-     False) ->
-    (derivable minimal_F
-       [Impl (Impl (Var a) (Var b)) (Var b); Neg (Var a)]
-       (Some (Var b)) ->
-     False).
-Proof.
-  intros a b Hab Hprem HD.
-  apply Hprem.
-  apply (DNS1_invertible_at_decisive_instance_in_ℱ_M a b Hab).
-  exact HD.
-Qed.
-
-(* Warm-up witness. The simplest sequent separating the two readings
-   is ¬A ⊢ A → B: one application of R_arrow_core to the
-   inconsistency sequent derives it in ℱ_ℂ, while in ℱ_𝐌 its only
-   possible premiss is the Claim 1 sequent itself. The DNS.1
-   instance below is the separation that matters for
-   paraconsistency; this one is the easiest to see. *)
-
-Theorem non_conservativity_witness_derivable_in_ℱ_ℂ :
-  forall a b : nat,
-    derivable core_logic [Neg (Var a)] (Some (Impl (Var a) (Var b))).
-Proof.
-  intros a b.
-  apply R_arrow_core.
-  apply absurdity_core.
-Qed.
-
-Theorem non_conservativity_witness_underivable_in_ℱ_M :
-  forall a b : nat,
-    a <> b ->
-    derivable minimal_F [Neg (Var a)] (Some (Impl (Var a) (Var b))) ->
-    False.
-Proof.
-  intros a b Hab HD.
-  inversion HD; subst; simpl in *;
-    repeat (match goal with
-            | Hyp : _ \/ _ |- _ => destruct Hyp as [Hyp | Hyp]
-            | Hyp : False |- _ => destruct Hyp
-            end);
-    try congruence.
-  match goal with
-  | Hp : derivable minimal_F (Var a :: [Neg (Var a)]) (Some (Var b)) |- _ =>
-      exact (claim1_holds_in_ℱ_M a b Hab Hp)
-  end.
-Qed.
-
-(* Consequence 2, for the Core reading ℱ_ℂ. First, Claim 1 holds of
-   the formalized fragment: no rule can conclude
-   [Var a; ¬Var a] ⊢ Var b when a <> b, since Ax requires Var b in
-   the context, L_arrow requires an implication in the context, L_neg
-   concludes on the empty succedent, and both right rules conclude on
-   an implicational succedent. *)
+(* The certification settles the status of anti_DNS1_rule_for_ℂ
+   completely, on both sides. In the minimal reading it is a
+   metatheorem, proved outright (anti_DNS1_holds_in_ℱ_M above). In
+   the Core reading, the formalisation is charitable to Tennant —
+   the fragment verifies Claim 1 itself, by structural inversion,
+   not by failure of search: *)
 
 Theorem claim1_holds_in_ℱ_ℂ :
   forall a b : nat,
@@ -621,20 +518,17 @@ Proof.
     congruence.
 Qed.
 
-(* Second, the converse of anti-DNS.1 — the invertibility of
-   DNS.1 — does not survive the passage from ℱ_𝐌 to ℱ_ℂ: DNS.2 is
-   derivable in ℱ_ℂ through R_arrow_core while the Claim 1 premiss
-   is not. In the vocabulary of refutation systems this is the
-   Ł-incorrectness, for ℱ_ℂ, of the refutation rule that the kernel
-   licenses; Version 4 stated the same certified fact as
-   non-conservativity of ℂ over its own kernel at the DNS.1
-   instance, whence the theorem's name, kept unchanged. It follows
-   that the hypothesis anti_DNS1_rule_for_ℂ of the final theorem is
-   refutable inside the formalized calculus, and only Tennant's own
-   account of the shared kernel can ground it — this is the
-   dialectical point of the paper. *)
+(* — and yet, DNS.2 being derivable through R→ℂ, the Core reading
+   refutes the commitment: the converse of anti-DNS.1, the
+   invertibility of DNS.1, does not survive the passage from ℱ_𝐌 to
+   ℱ_ℂ. The refutation rule anti-DNS.1 is thereby Ł-incorrect for
+   ℱ_ℂ — the rule-level form of the system-level verdict of
+   Block E, and the exact refutation, inside the calculus, of the
+   hypothesis anti_DNS1_rule_for_ℂ of the final theorem. (In
+   Versions 4 and 5 of this file the same certified fact was named
+   ℱ_ℂ_not_conservative_at_DNS1.) *)
 
-Theorem ℱ_ℂ_not_conservative_at_DNS1 :
+Theorem anti_DNS1_Ł_incorrect_for_ℱ_ℂ :
   forall a b : nat,
     a <> b ->
     ~ ( (derivable core_logic [Var a; Neg (Var a)] (Some (Var b)) ->
@@ -650,79 +544,17 @@ Proof.
   apply absurdity_core.
 Qed.
 
-(* ════════════════════════════════════════════════════════════════
-   The refutation system
-   ════════════════════════════════════════════════════════════════
+(* ══ Verification ══ *)
 
-   In the sense of Łukasiewicz, Tiomkin (1988) and Goranko (Studia
-   Logica 53, 1994, section 2), a refutation system derives
-   NON-provability from rejection axioms and refutation rules, and
-   its correctness discipline requires every refutation rule to have
-   a correct converse (Goranko's Theorem 2.1). Below, the smallest
-   refutation system that the kernel licenses: Claim 1 as its only
-   rejection axiom, anti-DNS.1 as its only refutation rule — the
-   converse of the latter being
-   DNS1_invertible_at_decisive_instance_in_ℱ_M. *)
-
-Inductive refutable : set formula -> option formula -> Prop :=
-
-  | claim1_axiom :
-      forall a b,
-        a <> b ->
-        refutable [Var a; Neg (Var a)] (Some (Var b))
-
-  | anti_DNS1 :
-      forall a b,
-        refutable [Var a; Neg (Var a)] (Some (Var b)) ->
-        refutable
-          [Impl (Impl (Var a) (Var b)) (Var b); Neg (Var a)]
-          (Some (Var b)).
-
-(* Ł-correctness for ℱ_𝐌: everything the system rejects is
-   underivable in the minimal reading. Induction on the refutation
-   derivation; both cases discharge through the invariant. *)
-
-Theorem refutation_system_Ł_correct_for_ℱ_M :
-  forall G C,
-    refutable G C ->
-    derivable minimal_F G C ->
-    False.
-Proof.
-  intros G C HR.
-  induction HR; intro HD.
-  - exact (claim1_holds_in_ℱ_M a b H HD).
-  - inversion HR; subst;
-    match goal with
-    | Hab : a <> b |- _ =>
-        exact (DNS1_conclusion_underivable_in_ℱ_M a b Hab HD)
-    end.
-Qed.
-
-(* Ł-incorrectness for ℱ_ℂ: the same system rejects a sequent that
-   the Core reading derives, the witness being produced by
-   R_arrow_core alone. A rejection assertion has inferential content
-   only inside a refutation system; the smallest one available to
-   Core's kernel rejects what Core proves. This is the certified
-   form of the contradiction involved in asserting Claim 1. *)
-
-Theorem refutation_system_Ł_incorrect_for_ℱ_ℂ :
-  exists G C,
-    refutable G C /\ derivable core_logic G C.
-Proof.
-  exists [Impl (Impl (Var 0) (Var 1)) (Var 1); Neg (Var 0)].
-  exists (Some (Var 1)).
-  split.
-  - apply anti_DNS1.
-    apply claim1_axiom.
-    discriminate.
-  - apply DNS2_instantiated.
-    apply absurdity_core.
-Qed.
-
-Print Assumptions non_conservativity_witness_derivable_in_ℱ_ℂ.
-Print Assumptions non_conservativity_witness_underivable_in_ℱ_M.
-Print Assumptions anti_DNS1_holds_in_ℱ_M.
-Print Assumptions ℱ_ℂ_not_conservative_at_DNS1.
+Print Assumptions DNS1_in_ℱ.
+Print Assumptions DNS2_instantiated.
 Print Assumptions DNS1_invertible_at_decisive_instance_in_ℱ_M.
+Print Assumptions claim1_holds_in_ℱ_M.
+Print Assumptions DNS1_conclusion_underivable_in_ℱ_M.
+Print Assumptions anti_DNS1_holds_in_ℱ_M.
 Print Assumptions refutation_system_Ł_correct_for_ℱ_M.
 Print Assumptions refutation_system_Ł_incorrect_for_ℱ_ℂ.
+Print Assumptions claim1_false.
+Print Assumptions claim1_false_at_0_1.
+Print Assumptions claim1_holds_in_ℱ_ℂ.
+Print Assumptions anti_DNS1_Ł_incorrect_for_ℱ_ℂ.

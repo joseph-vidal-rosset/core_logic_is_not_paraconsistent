@@ -1,7 +1,24 @@
 {
     "challenge_module": "Challenge",
     "solution_module": "Solution",
-    "theorem_names": ["DNS1_invertible_at_decisive_instance_in_ℱ_M", "anti_DNS1_holds_in_ℱ_M", "ℱ_ℂ_not_conservative_at_DNS1", "refutation_system_Ł_correct_for_ℱ_M", "refutation_system_Ł_incorrect_for_ℱ_ℂ", "claim1_false", "claim1_false_at_0_1"],
-    "permitted_axioms": ["propext", "Quot.sound", "Classical.choice"],
+    "theorem_names": [
+        "DNS1_in_ℱ",
+        "DNS2_instantiated",
+        "DNS1_invertible_at_decisive_instance_in_ℱ_M",
+        "claim1_holds_in_ℱ_M",
+        "DNS1_conclusion_underivable_in_ℱ_M",
+        "anti_DNS1_holds_in_ℱ_M",
+        "refutation_system_Ł_correct_for_ℱ_M",
+        "refutation_system_Ł_incorrect_for_ℱ_ℂ",
+        "claim1_false",
+        "claim1_false_at_0_1",
+        "claim1_holds_in_ℱ_ℂ",
+        "anti_DNS1_Ł_incorrect_for_ℱ_ℂ"
+    ],
+    "permitted_axioms": [
+        "propext",
+        "Quot.sound",
+        "Classical.choice"
+    ],
     "enable_nanoda": true
 }

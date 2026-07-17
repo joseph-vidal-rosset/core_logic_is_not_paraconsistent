@@ -1,57 +1,59 @@
 /- ════════════════════════════════════════════════════════════════
    CHALLENGE — Core Logic is not paraconsistent: refutation-system
-   version (Version 5)
+   version (Version 6, the arXiv/AJL appendix file)
    ════════════════════════════════════════════════════════════════
 
    Trusted statements for the Lean Comparator.
 
-   Terminology. The four rules Ax, L_neg, R_arrow, L_arrow determine
-   one fragment ℱ under two readings: ℱ_𝐌, its minimal reading, and
-   ℱ_ℂ, its Core reading, which adds R_arrow_core. Every rule of ℱ_𝐌
-   is a rule of ℂ, so nothing foreign to Core is involved anywhere
-   below.
-
    The trusted base consists of:
-   - the corrected full calculus [Derivable]: contexts are lists,
-     left rules apply extensionally through membership, there is no
-     primitive Exchange rule, R_arrow_core is available only in the
+   - the language and the calculus [Derivable]: one fragment ℱ
+     (rules Ax, L_neg, R_arrow, L_arrow) under two readings,
+     minimal_F (ℱ_𝐌) and core_logic (ℱ_ℂ, adding R_arrow_core);
+     contexts are lists, the left rules locate their principal
+     formula extensionally by membership, no structural rule is
+     primitive, and R_arrow_core is restricted by typing to the
      Core reading;
-   - the refutation system [Refutable], in the sense of Łukasiewicz,
-     Tiomkin (1988) and Goranko (Studia Logica 53, 1994): Claim 1 as
-     its only rejection axiom, the anti-DNS.1 instance as its only
-     refutation rule — the converse of the latter being the
-     invertibility of DNS.1, certified below for ℱ_𝐌.
+   - the refutation system [Refutable], in the sense of
+     Łukasiewicz, Tiomkin (1988) and Goranko (Studia Logica 53,
+     1994): Claim 1 as its only rejection axiom, the anti-DNS.1
+     instance as its only refutation rule.
 
-   Seven results are to be certified.
+   Twelve results are to be certified, matching the four steps of
+   the paper and the status of its second commitment:
 
-   (1) DNS1_invertible_at_decisive_instance_in_ℱ_M: DNS.1 is
-       invertible at the decisive instance in the minimal reading.
-
-   (2) anti_DNS1_holds_in_ℱ_M: the anti-DNS.1 instance holds in
-       ℱ_𝐌 — the contrapositive of (1).
-
-   (3) ℱ_ℂ_not_conservative_at_DNS1: the converse of anti-DNS.1
-       does not survive the passage from ℱ_𝐌 to ℱ_ℂ — DNS.2 is
-       derivable in ℱ_ℂ through R_arrow_core while Claim 1 holds of
-       the formalized fragment. (Version 4 name kept.)
-
-   (4) refutation_system_Ł_correct_for_ℱ_M: everything the
-       refutation system rejects is underivable in ℱ_𝐌.
-
-   (5) refutation_system_Ł_incorrect_for_ℱ_ℂ: the same refutation
-       system rejects a sequent that ℱ_ℂ derives.
-
-   (6) claim1_false: the conditional collision — Tennant's Claim 1
-       (restricted to distinct atoms) and the kernel's refutation
-       rule stated for ℂ (anti_DNS1_rule_for_ℂ, named
-       conservativity_at_DNS1 in Version 4) jointly entail False.
-
-   (7) claim1_false_at_0_1: the closed instance at atoms 0 and 1.
+   Step 1 (derivability):
+     (1) DNS1_in_ℱ — DNS.1 is derivable uniformly in both readings;
+     (2) DNS2_instantiated — DNS.2 is derivable in the Core reading
+         through R_arrow_core.
+   Step 2 (invertibility):
+     (3) DNS1_invertible_at_decisive_instance_in_ℱ_M;
+     (4) claim1_holds_in_ℱ_M — the premiss of the instance is
+         underivable in ℱ_𝐌;
+     (5) DNS1_conclusion_underivable_in_ℱ_M — so is its conclusion.
+   Step 3 (the refutation rule and the refutation system):
+     (6) anti_DNS1_holds_in_ℱ_M — anti-DNS.1, contrapositive of the
+         invertibility, is a metatheorem of ℱ_𝐌;
+     (7) refutation_system_Ł_correct_for_ℱ_M — the refutation
+         system is Ł-correct for the minimal reading.
+   Step 4 (the contradiction):
+     (8) refutation_system_Ł_incorrect_for_ℱ_ℂ — the same system
+         rejects a sequent that the Core reading derives;
+     (9) claim1_false — the conditional collision: Tennant's
+         Claim 1 (restricted to distinct atoms) and the kernel's
+         refutation rule stated for ℂ (anti_DNS1_rule_for_ℂ, named
+         conservativity_at_DNS1 in Version 4) jointly entail False;
+    (10) claim1_false_at_0_1 — the closed instance at atoms 0, 1.
+   Status of the second commitment:
+    (11) claim1_holds_in_ℱ_ℂ — the fragment verifies Claim 1;
+    (12) anti_DNS1_Ł_incorrect_for_ℱ_ℂ — and refutes the
+         commitment through R_arrow_core (named
+         ℱ_ℂ_not_conservative_at_DNS1 in Versions 4 and 5).
 
    A passing candidate must prove these statements without sorry,
    admit, or non-Lean axioms; #print axioms may report [propext]
    only.
    ════════════════════════════════════════════════════════════════ -/
+
 
 inductive Formula : Type
   | Var  : Nat → Formula
@@ -70,14 +72,6 @@ open FragmentF
 
 /- [some A] is a one-formula succedent.
    [none] is the empty succedent. -/
-
-/- ════════════════════════════════════════════════════════════════
-   Full corrected calculus
-
-   Contexts are technically lists, but L_neg and L_arrow locate their
-   principal formula extensionally by membership. No Exchange
-   constructor is present.
-   ════════════════════════════════════════════════════════════════ -/
 
 inductive Derivable : FragmentF → List Formula → Option Formula → Prop
   | Ax :
@@ -109,14 +103,7 @@ inductive Derivable : FragmentF → List Formula → Option Formula → Prop
         Derivable core_logic (A :: G) none →
         Derivable core_logic G (some (Impl A B))
 
-/- ════════════════════════════════════════════════════════════════
-   The refutation system
-
-   Claim 1 as the only rejection axiom, the anti-DNS.1 instance as
-   the only refutation rule. Its correctness discipline follows
-   Goranko's Theorem 2.1: a refutation rule is licensed by the
-   correctness of its converse, certified in statement (1).
-   ════════════════════════════════════════════════════════════════ -/
+/- ── Structural admissibility: weakening ── -/
 
 inductive Refutable : List Formula → Option Formula → Prop
   | claim1_axiom :
@@ -134,6 +121,18 @@ inductive Refutable : List Formula → Option Formula → Prop
    Trusted statements
    ════════════════════════════════════════════════════════════════ -/
 
+theorem DNS1_in_ℱ (f : FragmentF) (a b : Nat) :
+    Derivable f [Var a, Neg (Var a)] (some (Var b)) →
+    Derivable f
+      [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
+      (some (Var b)) := sorry
+
+theorem DNS2_instantiated (a b : Nat) :
+    Derivable core_logic [Var a, Neg (Var a)] none →
+    Derivable core_logic
+      [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
+      (some (Var b)) := sorry
+
 theorem DNS1_invertible_at_decisive_instance_in_ℱ_M
     (a b : Nat) (hab : a ≠ b) :
     Derivable minimal_F
@@ -141,17 +140,19 @@ theorem DNS1_invertible_at_decisive_instance_in_ℱ_M
       (some (Var b)) →
     Derivable minimal_F [Var a, Neg (Var a)] (some (Var b)) := sorry
 
+theorem claim1_holds_in_ℱ_M (a b : Nat) (hab : a ≠ b) :
+    Derivable minimal_F [Var a, Neg (Var a)] (some (Var b)) → False := sorry
+
+theorem DNS1_conclusion_underivable_in_ℱ_M (a b : Nat) (hab : a ≠ b) :
+    Derivable minimal_F
+      [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
+      (some (Var b)) → False := sorry
+
 theorem anti_DNS1_holds_in_ℱ_M (a b : Nat) (hab : a ≠ b) :
     (Derivable minimal_F [Var a, Neg (Var a)] (some (Var b)) → False) →
     (Derivable minimal_F
       [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
       (some (Var b)) → False) := sorry
-
-theorem ℱ_ℂ_not_conservative_at_DNS1 (a b : Nat) (hab : a ≠ b) :
-    ¬ ( (Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) → False) →
-        (Derivable core_logic
-          [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
-          (some (Var b)) → False) ) := sorry
 
 theorem refutation_system_Ł_correct_for_ℱ_M :
     ∀ {G : List Formula} {C : Option Formula},
@@ -198,3 +199,12 @@ theorem claim1_false_at_0_1
           (some (Var b)) →
           False)) :
     False := sorry
+
+theorem claim1_holds_in_ℱ_ℂ (a b : Nat) (hab : a ≠ b) :
+    Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) → False := sorry
+
+theorem anti_DNS1_Ł_incorrect_for_ℱ_ℂ (a b : Nat) (hab : a ≠ b) :
+    ¬ ( (Derivable core_logic [Var a, Neg (Var a)] (some (Var b)) → False) →
+        (Derivable core_logic
+          [Impl (Impl (Var a) (Var b)) (Var b), Neg (Var a)]
+          (some (Var b)) → False) ) := sorry
