@@ -1,48 +1,49 @@
-# Core Logic is Not Paraconsistent
+# Comparator certification (gold standard) — Version 5
 
-A short, machine-checked case against the paraconsistency claimed for
-Neil Tennant's **Core Logic** (ℂ).
+This directory lets anyone re-verify the Lean proof that Core Logic is
+not paraconsistent (refutation-system version) with the Lean
+**Comparator**, at the "gold standard" of the Lean reference manual:
+the candidate solution is checked against a *trusted challenge* and
+replayed through two independently implemented kernels — Lean's own
+and nanoda.
 
-The formalization considers one fragment ℱ — the four shared rules
-Ax, L¬, R→, L→, with contexts as lists and left rules applying
-extensionally through membership — under two readings: **ℱ_𝐌**, its
-minimal reading, and **ℱ_ℂ**, its Core reading, which adds R→core.
-Every rule of ℱ_𝐌 is a rule of ℂ; conservativity is a relation of ℂ
-to its own kernel, so nothing foreign to Core is involved anywhere.
+## Files
 
-Version 4 certifies:
+- `Challenge.lean` — the trusted statement: the language, the rules of
+  the fragment `F` under its two readings, the refutation system
+  `Refutable` (Claim 1 as the only rejection axiom, anti-DNS.1 as the
+  only refutation rule, in the sense of Łukasiewicz, Tiomkin 1988 and
+  Goranko, Studia Logica 53, 1994), and seven theorems with their
+  proofs left as `sorry`:
+  `DNS1_invertible_at_decisive_instance_in_ℱ_M`,
+  `anti_DNS1_holds_in_ℱ_M`, `ℱ_ℂ_not_conservative_at_DNS1`,
+  `refutation_system_Ł_correct_for_ℱ_M`,
+  `refutation_system_Ł_incorrect_for_ℱ_ℂ`, `claim1_false`,
+  `claim1_false_at_0_1`. This file is the *entire* trusted base of
+  the check.
+- `Solution.lean` — the candidate proof. Byte-identical to
+  `../core_logic_is_not_paraconsistent.lean` (Version 5).
+- `lakefile.toml` — declares the two Lean libraries `Challenge` and
+  `Solution`.
+- `lean-toolchain` — pins Lean `v4.31.0-rc2`.
+- `config.json` — comparator configuration: the seven theorem names
+  above, permitted axioms `propext, Quot.sound, Classical.choice`,
+  nanoda kernel enabled.
 
-1. **DNS.1** is derivable uniformly in both readings (`DNS1_in_ℱ`).
-2. The **anti-DNS.1 instance is a metatheorem of ℱ_𝐌 itself**
-   (`anti_DNS1_holds_in_ℱ_M`), proved by a direct invariant on
-   contexts — it is a mechanically certified fact, not an assumption.
-3. **ℱ_ℂ is not conservative over ℱ_𝐌** at the DNS.1 instance
-   (`ℱ_ℂ_not_conservative_at_DNS1`): DNS.2 is derivable in ℱ_ℂ
-   through R→core while Claim 1 holds of the formalized fragment.
-   The simplest certified witness of non-conservativity is
-   ¬A ⊢ A → B (`non_conservativity_witness_*`).
-4. The **conditional collision** (`claim1_false`): Tennant's Claim 1
-   (restricted to distinct atoms) and the conservativity commitment
-   at the DNS.1 instance — displayed as the explicit hypothesis
-   `conservativity_at_DNS1` of the final theorem — jointly entail
-   False, with a closed instance at atoms 0 and 1.
+Challenge SHA256:
+`37f4edd7b9ba5fbea333e9df3d9a18a737d59e651c36609cc5112556f8947636`
 
-No primitive Exchange rule and no universal transfer principle are
-postulated; weakening is proved admissible.
+## Prerequisites
 
-## Formal verifications
+1. A Lean toolchain via [elan](https://elan.lean-lang.org).
+2. The [comparator](https://github.com/leanprover/comparator) tool,
+   built from a fresh checkout with `lake build lean4export comparator`.
+3. [landrun](https://github.com/zouuup/landrun) (the build sandbox),
+   compiled from source and reachable via `PATH` or `COMPARATOR_LANDRUN`.
+4. [nanoda](https://github.com/ammkrn/nanoda_lib) (the second, Rust
+   kernel), built with `cargo build --release`, reachable via
+   `COMPARATOR_NANODA`.
 
-| File | System |
-|------|--------|
-| `core_logic_is_not_paraconsistent.v`    | Coq / Rocq 8.18 — all `Print Assumptions` closed |
-| `core_logic_is_not_paraconsistent.lean` | Lean 4 — `[propext]` only, checked on 4.21.0, 4.31.0-rc2, 4.32.0 |
-| `core_logic_is_not_paraconsistent.ath`  | Athena — certifies the earlier presentation, to be updated |
-| `core_logic_is_not_paraconsistent.pl`   | SWI-Prolog — companion development, earlier presentation |
-
-The `comparator/` directory contains the Challenge/Solution pair for
-the Lean Comparator (four certified theorems; challenge SHA256
-`2604e39526ad85b5497efdc9514f27c3774a47503dea76f97a20fa0f70bf70d9`).
-
-## License
-
-Released under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)
+The rationale for this procedure is given in the Lean reference manual,
+*Validating a Lean Proof*:
+https://lean-lang.org/doc/reference/latest/ValidatingProofs/

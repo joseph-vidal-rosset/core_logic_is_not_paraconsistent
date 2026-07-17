@@ -1,6 +1,6 @@
 (* ════════════════════════════════════════════════════════════════
-   Core Logic is not paraconsistent: the conservativity version
-   (Version 4)
+   Core Logic is not paraconsistent: the refutation-system version
+   (Version 5)
    ════════════════════════════════════════════════════════════════
 
    Terminology. The four rules Ax, L_neg, R_arrow, L_arrow determine
@@ -12,22 +12,31 @@
      (ii) ℱ_ℂ : the Core reading — the same four rules plus
           R_arrow_core.
 
-   Every rule of ℱ_𝐌 is a rule of ℂ; conservativity is a relation of
-   ℂ to its own kernel. The commitment displayed in the final theorem
-   therefore imports no foreign rule into Core: it states that ℂ
-   proves nothing new at one single sequent of the shared kernel — an
-   instance of conservativity, refuted below by R_arrow_core itself.
+   Every rule of ℱ_𝐌 is a rule of ℂ. The commitment displayed in
+   the final theorem therefore imports no foreign rule into Core: it
+   states that the refutation rule licensed by the kernel's own
+   invertibility — anti-DNS.1 — governs ℂ's rejection assertion at
+   one single sequent. That commitment is refuted below by
+   R_arrow_core itself.
 
    Architecture of the result:
      1. DNS.1 is derivable uniformly in both readings (DNS1_in_ℱ).
-     2. The anti-DNS.1 instance is a metatheorem of ℱ_𝐌
-        (anti_DNS1_holds_in_ℱ_M), proved by a direct invariant.
-     3. ℱ_ℂ proves DNS.2 through R_arrow_core, and is thereby not
-        conservative over ℱ_𝐌 at the DNS.1 instance
-        (ℱ_ℂ_not_conservative_at_DNS1).
+     2. DNS.1 is invertible at the decisive instance in ℱ_𝐌
+        (DNS1_invertible_at_decisive_instance_in_ℱ_M), and the
+        anti-DNS.1 instance is its contrapositive
+        (anti_DNS1_holds_in_ℱ_M): in the sense of Łukasiewicz and
+        Goranko, a refutation rule licensed by the correctness of
+        its converse — not a meta-rule imported from outside, but a
+        rule dormant in the shadow of the kernel.
+     3. The refutation system with Claim 1 as its only rejection
+        axiom and anti-DNS.1 as its only refutation rule is
+        Ł-correct for ℱ_𝐌 and Ł-incorrect for ℱ_ℂ, the
+        incorrectness being produced by R_arrow_core alone
+        (refutation_system_Ł_correct_for_ℱ_M,
+        refutation_system_Ł_incorrect_for_ℱ_ℂ).
      4. The final theorem displays the one remaining commitment,
-        conservativity_at_DNS1, and derives the collision with
-        Claim 1 (claim1_false).
+        anti_DNS1_rule_for_ℂ (named conservativity_at_DNS1 in Version 4), and
+        derives the collision with Claim 1 (claim1_false).
 
    There is no primitive Exchange rule and no universal transfer
    principle for arbitrary antisequent rules; weakening is proved
@@ -325,18 +334,24 @@ Qed.
    ════════════════════════════════════════════════════════════════
 
    anti_DNS1_holds_in_ℱ_M (proved below) establishes that the
-   anti-DNS.1 instance is a metatheorem of the minimal reading ℱ_𝐌.
+   anti-DNS.1 instance is the contrapositive of the invertibility
+   of DNS.1 in the minimal reading ℱ_𝐌.
 
-   The following narrowly scoped hypothesis is not a universal
-   antisequent-transfer axiom. It is one single instance of
-   conservativity of ℂ over its own kernel: the commitment that ℂ
-   proves nothing new at the DNS.1 sequent. Nothing foreign to Core
-   is involved, since every rule of ℱ_𝐌 is a rule of ℂ.
+   The hypothesis anti_DNS1_rule_for_ℂ — named conservativity_at_DNS1 in
+   Version 4 — is not a universal antisequent-transfer axiom and
+   not a meta-rule. It is the kernel's own refutation rule, stated
+   for the Core reading: in Goranko's discipline a refutation rule
+   is licensed by the correctness of its converse, and its converse
+   here is the invertibility of DNS.1, certified for ℱ_𝐌 below.
+   Nothing foreign to Core is involved, since every rule of ℱ_𝐌 is
+   a rule of ℂ.
 
    This is the precise dialectical issue:
-   - syntactically, the anti-DNS.1 instance holds in ℱ_𝐌;
-   - textually/philosophically, one argues that Tennant's account of
-     the shared kernel commits ℂ to this conservativity instance;
+   - syntactically, anti-DNS.1 holds in ℱ_𝐌 as the contrapositive
+     of a certified invertibility;
+   - a rejection assertion has inferential content only inside a
+     refutation system (Łukasiewicz); the smallest one the kernel
+     licenses contains exactly this rule;
    - ℱ_ℂ proves DNS.2 through R_arrow_core, producing the collision
      with Claim 1.
    ════════════════════════════════════════════════════════════════ *)
@@ -349,7 +364,7 @@ Theorem claim1_false :
         derivable core_logic [Var a; Neg (Var a)] (Some (Var b)) ->
         False)
 
-    (conservativity_at_DNS1 :
+    (anti_DNS1_rule_for_ℂ :
       forall a b : nat,
         a <> b ->
         (derivable core_logic [Var a; Neg (Var a)] (Some (Var b)) ->
@@ -363,8 +378,8 @@ Theorem claim1_false :
       a <> b ->
       False.
 Proof.
-  intros Claim1_Tennant conservativity_at_DNS1 a b Hab.
-  apply (conservativity_at_DNS1 a b Hab).
+  intros Claim1_Tennant anti_DNS1_rule_for_ℂ a b Hab.
+  apply (anti_DNS1_rule_for_ℂ a b Hab).
   - apply (Claim1_Tennant a b Hab).
   - apply DNS2_instantiated.
     apply absurdity_core.
@@ -380,7 +395,7 @@ Corollary claim1_false_at_0_1 :
         derivable core_logic [Var a; Neg (Var a)] (Some (Var b)) ->
         False)
 
-    (conservativity_at_DNS1 :
+    (anti_DNS1_rule_for_ℂ :
       forall a b : nat,
         a <> b ->
         (derivable core_logic [Var a; Neg (Var a)] (Some (Var b)) ->
@@ -392,9 +407,9 @@ Corollary claim1_false_at_0_1 :
 
     False.
 Proof.
-  intros Claim1_Tennant conservativity_at_DNS1.
+  intros Claim1_Tennant anti_DNS1_rule_for_ℂ.
   apply
-    (claim1_false Claim1_Tennant conservativity_at_DNS1 0 1).
+    (claim1_false Claim1_Tennant anti_DNS1_rule_for_ℂ 0 1).
   discriminate.
 Qed.
 
@@ -510,7 +525,28 @@ Proof.
   - right. left. reflexivity.
 Qed.
 
-(* Hence the anti-DNS.1 instance is a metatheorem of ℱ_𝐌 itself. *)
+(* The invertibility of DNS.1 at the decisive instance is a
+   metatheorem of ℱ_𝐌, established through the invariant. *)
+
+Theorem DNS1_invertible_at_decisive_instance_in_ℱ_M :
+  forall a b : nat,
+    a <> b ->
+    derivable minimal_F
+      [Impl (Impl (Var a) (Var b)) (Var b); Neg (Var a)]
+      (Some (Var b)) ->
+    derivable minimal_F [Var a; Neg (Var a)] (Some (Var b)).
+Proof.
+  intros a b Hab HD.
+  exfalso.
+  exact (DNS1_conclusion_underivable_in_ℱ_M a b Hab HD).
+Qed.
+
+(* Hence the anti-DNS.1 instance holds in ℱ_𝐌 as the CONTRAPOSITIVE
+   of this invertibility — Goranko's converse-rule discipline: a
+   refutation rule is licensed by the correctness of its converse.
+   Anti-DNS.1 is therefore not a meta-rule imported into the
+   kernel; it is a rule derivable from the kernel's invertibility,
+   dormant in the shadow of the system. *)
 
 Theorem anti_DNS1_holds_in_ℱ_M :
   forall a b : nat,
@@ -522,16 +558,18 @@ Theorem anti_DNS1_holds_in_ℱ_M :
        (Some (Var b)) ->
      False).
 Proof.
-  intros a b Hab _ HD.
-  exact (DNS1_conclusion_underivable_in_ℱ_M a b Hab HD).
+  intros a b Hab Hprem HD.
+  apply Hprem.
+  apply (DNS1_invertible_at_decisive_instance_in_ℱ_M a b Hab).
+  exact HD.
 Qed.
 
-(* Warm-up witness. The simplest certificate of non-conservativity of
-   ℱ_ℂ over ℱ_𝐌 is the sequent ¬A ⊢ A → B: one application of
-   R_arrow_core to the inconsistency sequent derives it in ℱ_ℂ, while
-   in ℱ_𝐌 its only possible premiss is the Claim 1 sequent itself.
-   The DNS.1 instance below is the witness that matters for
-   paraconsistency; this one is the witness that is easiest to see. *)
+(* Warm-up witness. The simplest sequent separating the two readings
+   is ¬A ⊢ A → B: one application of R_arrow_core to the
+   inconsistency sequent derives it in ℱ_ℂ, while in ℱ_𝐌 its only
+   possible premiss is the Claim 1 sequent itself. The DNS.1
+   instance below is the separation that matters for
+   paraconsistency; this one is the easiest to see. *)
 
 Theorem non_conservativity_witness_derivable_in_ℱ_ℂ :
   forall a b : nat,
@@ -583,14 +621,18 @@ Proof.
     congruence.
 Qed.
 
-(* Second, ℱ_ℂ is not conservative over ℱ_𝐌 at the DNS.1 instance:
-   DNS.2 is derivable in ℱ_ℂ through R_arrow_core while its sequent
-   is underivable in ℱ_𝐌, so the Core-level anti-DNS.1 instance is
-   false of the formalized calculus. The hypothesis
-   conservativity_at_DNS1 of the final theorem is therefore exactly
-   the disputed instance of conservativity of ℂ over its own kernel:
-   the formalization displays it, and only Tennant's own account of
-   the shared kernel can ground it. *)
+(* Second, the converse of anti-DNS.1 — the invertibility of
+   DNS.1 — does not survive the passage from ℱ_𝐌 to ℱ_ℂ: DNS.2 is
+   derivable in ℱ_ℂ through R_arrow_core while the Claim 1 premiss
+   is not. In the vocabulary of refutation systems this is the
+   Ł-incorrectness, for ℱ_ℂ, of the refutation rule that the kernel
+   licenses; Version 4 stated the same certified fact as
+   non-conservativity of ℂ over its own kernel at the DNS.1
+   instance, whence the theorem's name, kept unchanged. It follows
+   that the hypothesis anti_DNS1_rule_for_ℂ of the final theorem is
+   refutable inside the formalized calculus, and only Tennant's own
+   account of the shared kernel can ground it — this is the
+   dialectical point of the paper. *)
 
 Theorem ℱ_ℂ_not_conservative_at_DNS1 :
   forall a b : nat,
@@ -608,7 +650,79 @@ Proof.
   apply absurdity_core.
 Qed.
 
+(* ════════════════════════════════════════════════════════════════
+   The refutation system
+   ════════════════════════════════════════════════════════════════
+
+   In the sense of Łukasiewicz, Tiomkin (1988) and Goranko (Studia
+   Logica 53, 1994, section 2), a refutation system derives
+   NON-provability from rejection axioms and refutation rules, and
+   its correctness discipline requires every refutation rule to have
+   a correct converse (Goranko's Theorem 2.1). Below, the smallest
+   refutation system that the kernel licenses: Claim 1 as its only
+   rejection axiom, anti-DNS.1 as its only refutation rule — the
+   converse of the latter being
+   DNS1_invertible_at_decisive_instance_in_ℱ_M. *)
+
+Inductive refutable : set formula -> option formula -> Prop :=
+
+  | claim1_axiom :
+      forall a b,
+        a <> b ->
+        refutable [Var a; Neg (Var a)] (Some (Var b))
+
+  | anti_DNS1 :
+      forall a b,
+        refutable [Var a; Neg (Var a)] (Some (Var b)) ->
+        refutable
+          [Impl (Impl (Var a) (Var b)) (Var b); Neg (Var a)]
+          (Some (Var b)).
+
+(* Ł-correctness for ℱ_𝐌: everything the system rejects is
+   underivable in the minimal reading. Induction on the refutation
+   derivation; both cases discharge through the invariant. *)
+
+Theorem refutation_system_Ł_correct_for_ℱ_M :
+  forall G C,
+    refutable G C ->
+    derivable minimal_F G C ->
+    False.
+Proof.
+  intros G C HR.
+  induction HR; intro HD.
+  - exact (claim1_holds_in_ℱ_M a b H HD).
+  - inversion HR; subst;
+    match goal with
+    | Hab : a <> b |- _ =>
+        exact (DNS1_conclusion_underivable_in_ℱ_M a b Hab HD)
+    end.
+Qed.
+
+(* Ł-incorrectness for ℱ_ℂ: the same system rejects a sequent that
+   the Core reading derives, the witness being produced by
+   R_arrow_core alone. A rejection assertion has inferential content
+   only inside a refutation system; the smallest one available to
+   Core's kernel rejects what Core proves. This is the certified
+   form of the contradiction involved in asserting Claim 1. *)
+
+Theorem refutation_system_Ł_incorrect_for_ℱ_ℂ :
+  exists G C,
+    refutable G C /\ derivable core_logic G C.
+Proof.
+  exists [Impl (Impl (Var 0) (Var 1)) (Var 1); Neg (Var 0)].
+  exists (Some (Var 1)).
+  split.
+  - apply anti_DNS1.
+    apply claim1_axiom.
+    discriminate.
+  - apply DNS2_instantiated.
+    apply absurdity_core.
+Qed.
+
 Print Assumptions non_conservativity_witness_derivable_in_ℱ_ℂ.
 Print Assumptions non_conservativity_witness_underivable_in_ℱ_M.
 Print Assumptions anti_DNS1_holds_in_ℱ_M.
 Print Assumptions ℱ_ℂ_not_conservative_at_DNS1.
+Print Assumptions DNS1_invertible_at_decisive_instance_in_ℱ_M.
+Print Assumptions refutation_system_Ł_correct_for_ℱ_M.
+Print Assumptions refutation_system_Ł_incorrect_for_ℱ_ℂ.
