@@ -1,48 +1,126 @@
 #============================================================================
-# core_logic_is_not_paraconsistent_concise.ath
+# core_logic_is_not_paraconsistent.ath
 #
-# Condensed version of core_logic_is_not_paraconsistent.ath (1485 l.).
-# Same final theorem (claim1-false), same two explicit axioms
-# (Claim1-Tennant, min-antisequent-rule-to-core), same encoding of
-# reified derivations (datatype Deriv + well-formed + derivable),
-# faithful to the Coq script core_logic_is_not_paraconsistent.v.
+# A PROOF IN ATHENA THAT CORE LOGIC IS NOT PARACONSISTENT
+# Version 6 -- the refutation-system version. Athena member of the
+# triple certification, faithful line by line to the Coq script
+# core_logic_is_not_paraconsistent.v (Version 6) and to its Lean 4
+# twin (Solution.lean); same twelve theorems, same block structure
+# (A-F), same proof ideas, same names (transliterated to ASCII:
+# F_M for the minimal reading, F_C for the Core reading, L- for
+# Lukasiewicz-).
 #
-# The compression rests on four generic methods:
+# WHAT CHANGED FROM THE PREVIOUS ATHENA VERSION (781 l., 2 axioms):
 #
-#   prove-trivia  -- proves any conjunction each of whose conjuncts is
-#                   either a reflexivity (t = t) or already in the
-#                   assumption base; replaces the repeated
-#                   reflex/conj-intro boilerplate.
-#   wf-elim       -- elimination of a well-formed clause: uspec* of the
-#                   biconditional + left-iff + mp. The instance lists
-#                   are copied VERBATIM from the validated long file
-#                   (the quantifier order of assert* was established
-#                   there empirically).
-#   refute-mem    -- refutes (mem x L) by recursion on L, provided the
-#                   inequalities (x =/= element) are in the assumption
-#                   base; replaces the three !cases cascades on mem-def.
-#   both-orders   -- (local to DNS1-inv): dispatches the disjunction of
-#                   the two context orderings to a single "kill" method
-#                   parameterized by the ordering; halves the body of
-#                   the Hgen induction.
+#   1. ZERO AXIOMS FOR THE ARGUMENT. The two commitments of Core Logic
+#      -- Tennant's Claim 1 (Claim1-Tennant-hyp) and the refutation
+#      rule anti-DNS.1 read as correct for F_C
+#      (anti-DNS1-rule-for-C-hyp) -- are no longer asserted: they are
+#      HYPOTHESES, i.e. antecedents of the final theorems claim1-false
+#      and claim1-false-at-zero-one. Every assert below is purely
+#      definitional: datatype axioms (free generation) and the
+#      defining biconditionals of mem, well-formed, derivable,
+#      refut-wf, refutable -- the exact Athena counterparts of Coq's
+#      Inductive declarations.
 #
-# The five introduction methods (ax!, lneg!, exch!, rac!, larrow!)
-# remain but each now takes ~6 lines thanks to prove-trivia. The
-# scaffolding test theorems (TEST 1, ax-leaf-wf-via-method) of the long
-# version are removed.
+#   2. NO EXCHANGE RULE. The calculus locates the principal formula of
+#      the left rules extensionally, by membership (mem), exactly as
+#      [In _ Gamma] does in the Coq source. The old exch-rule
+#      constructor is gone; contexts are pools of available
+#      assumptions, and the only structural fact used is
+#      context-monotonicity -- NOT Weakening (no new derivation is
+#      created), NOT Cut: one and the same derivation tree, rebuilt
+#      unchanged in a larger pool.
 #
-# Constructions worth noting (all documented in FPMICS):
-#   (1) the patterns (and (some-list _)) and
-#       (= (some-term l) (some-term r)) in prove-trivia;
-#   (2) anonymous methods passed to both-orders;
-#   (3) check {... => ... | else => ...} in the L-> and Exchange
-#       branches of Hgen.
+#   3. ATOMS ARE PEANO NATURALS (datatype Atom := zero | succ), as in
+#      the Coq source (Var : nat -> formula). Reason: the closed
+#      instance claim1-false-at-zero-one needs two PROVABLY distinct
+#      atoms, and in Athena two meta-identifiers 'a, 'b are not
+#      provably distinct without an extra axiom -- which would ruin
+#      point 1. (zero =/= succ zero) is a free-generation axiom of
+#      the datatype: the Athena counterpart of Coq's discriminate.
+#
+#   4. THE REFUTATION SYSTEM IS REIFIED, like derivations: datatype
+#      Refut (constructors claim1-axiom and anti-DNS1) + refut-wf +
+#      refutable -- a deductive system for NON-provability in the
+#      sense of Lukasiewicz, Tiomkin (1988) and Goranko (Studia
+#      Logica 53, 1994), with Claim 1 as its only rejection axiom and
+#      anti-DNS.1 as its only refutation rule.
+#
+# THE TWELVE THEOREMS (Coq name -> Athena name):
+#
+#   DNS1_in_F                                DNS1-in-F
+#   DNS2_instantiated                        DNS2-instantiated
+#   DNS1_invertible_at_decisive_instance_in_F_M
+#                            DNS1-invertible-at-decisive-instance-in-F-M
+#   claim1_holds_in_F_M                      claim1-holds-in-F-M
+#   DNS1_conclusion_underivable_in_F_M
+#                                    DNS1-conclusion-underivable-in-F-M
+#   anti_DNS1_holds_in_F_M                   anti-DNS1-holds-in-F-M
+#   refutation_system_L_correct_for_F_M
+#                                   refutation-system-L-correct-for-F-M
+#   refutation_system_L_incorrect_for_F_C
+#                                 refutation-system-L-incorrect-for-F-C
+#   claim1_false                             claim1-false
+#   claim1_false_at_0_1                      claim1-false-at-zero-one
+#   claim1_holds_in_F_C                      claim1-holds-in-F-C
+#   anti_DNS1_L_incorrect_for_F_C            anti-DNS1-L-incorrect-for-F-C
+#
+# plus the same auxiliary lemmas as in Coq: absurdity-core,
+# context-monotonicity, DNS1-inversion-lemma (von Plato's method),
+# refut-inversion, L-correct-aux.
+#
+# THE ARGUMENT IN ONE PARAGRAPH. DNS.1 is derivable in both readings
+# (Block B) and invertible at the decisive instance in the minimal
+# reading F_M (Blocks B-C): its premiss sequent A, not-A => B and its
+# conclusion sequent (A->B)->B, not-A => B are BOTH underivable there.
+# Hence the refutation system {Claim 1; anti-DNS.1} is L-correct for
+# F_M (Block D). But that same refutation system is L-INCORRECT for
+# the Core reading F_C (Block E): the decisive instance at the atoms
+# 0, 1 is rejected by the system, yet derivable in F_C through
+# R->C -- the derivation of DNS.2 from absurdity-core. Jointly,
+# then, the two commitments of Core Logic refute themselves:
+# claim1-false, closed at 0 and 1 in claim1-false-at-zero-one with no
+# remaining hypothesis. Finally (Block F), Claim 1 is in fact TRUE of
+# F_C (claim1-holds-in-F-C) -- and precisely for that reason
+# anti-DNS.1 is L-incorrect for F_C (anti-DNS1-L-incorrect-for-F-C):
+# Tennant cannot both keep Claim 1 and use the refutation rule his
+# paraconsistency argument requires, the rule dormant in the shadow
+# of the system.
+#
+# Generic methods (compression layer, in the style of the previous
+# version): prove-trivia, wf-elim, mem!, mem2-cases!, sub-rewrite!,
+# sub-cons!, un-derivable!, apply-mono!, neq-sym!, neq-atoms!,
+# neq-formulas!, succ-neq!, none-neq!, into-disj3!, inv-ctx!,
+# succ-impl-kill!, plus one introduction method per constructor
+# (ax!, lneg!, rarrow!, larrow!, rac!, claim1-ax!, anti!, derivable!,
+# refutable!). All constructions documented in FPMICS (Arkoudas &
+# Musser): assert* with auto-quantification, chain with bidirectional
+# equational justifications and [alternate], by-induction,
+# datatype-cases, pick-witness, by-contradiction, from-complements,
+# try, check, match with (some-list _)/(some-term _) patterns.
+#
+# Validated end to end (17 theorems, zero evaluation errors) against
+# an Athena kernel built from the official sources
+# (github.com/AthenaFoundation/Athena, SML/NJ image).
 #============================================================================
 
-# --- Datatypes (unchanged) ---
+# == Block A -- Language and calculus (Version 6 encoding) ==
+#
+# Reified derivations: datatype Deriv + well-formed + derivable.
+# Faithful to core_logic_is_not_paraconsistent.v (Version 6):
+# NO Exchange rule; the left rules locate their principal formula
+# extensionally, by membership (mem), exactly as [In _ G] does in Coq.
+
+# Atoms are Peano naturals, exactly as in the Coq source (Var : nat ->
+# formula): the closed instance claim1-false-at-zero-one needs two
+# PROVABLY distinct atoms, and (zero =/= succ zero) is a free-generation
+# axiom of the datatype -- the Athena counterpart of Coq's discriminate.
+
+datatype Atom := zero | (succ Atom)
 
 datatype Formula :=
-    (Var Ide)
+    (Var Atom)
   | (Neg Formula)
   | (Impl Formula Formula)
 
@@ -58,27 +136,24 @@ datatype Deriv :=
   | (r-arrow-rule Fragment (List Formula) Formula Formula Deriv)
   | (l-arrow-rule Fragment (List Formula) Formula Formula Succedent
                   Deriv Deriv)
-  | (exchange-rule Fragment Formula Formula Succedent Deriv)
   | (r-arrow-core-rule (List Formula) Formula Formula Deriv)
 
-# Free-generation axioms (no-confusion + injectivity), asserted into
-# the assumption base.
-
+assert (datatype-axioms "Atom")
 assert (datatype-axioms "Succedent")
 assert (datatype-axioms "Formula")
 assert (datatype-axioms "Fragment")
 assert (datatype-axioms "List")
 
-# Named accessors for the no-confusion axioms reused below.
-
 define formula-axioms := (datatype-axioms "Formula")
-define neg-neq-impl  := (head formula-axioms)                # Neg x =/= Impl y z
-define var-neq-neg   := (head (tail formula-axioms))         # Var x =/= Neg y
-define var-neq-impl  := (head (tail (tail formula-axioms)))  # Var x =/= Impl y z
+define neg-neq-impl  := (head formula-axioms)
+define var-neq-neg   := (head (tail formula-axioms))
+define var-neq-impl  := (head (tail (tail formula-axioms)))
 define succ-axioms   := (datatype-axioms "Succedent")
-define none-neq-some := (head succ-axioms)                   # none =/= some y
+define none-neq-some := (head succ-axioms)
+define frag-axioms   := (datatype-axioms "Fragment")
+define min-neq-core  := (head frag-axioms)
 
-# --- Variable abbreviations (unchanged) ---
+# --- Variable abbreviations ---
 
 define [A B C]      := [?A:Formula ?B:Formula ?C:Formula]
 define [G G']       := [?G:(List Formula) ?G':(List Formula)]
@@ -87,8 +162,11 @@ define [S S']       := [?S:Succedent ?S':Succedent]
 define [Sc Sc']     := [?Sc:Succedent ?Sc':Succedent]
 define [d d1 d2]    := [?d:Deriv ?d1:Deriv ?d2:Deriv]
 define [x y]        := [?x:Formula ?y:Formula]
+define [a b]        := [?a:Atom ?b:Atom]
+define atom-axioms  := (datatype-axioms "Atom")
+define zero-neq-succ := (head atom-axioms)
 
-# --- Membership predicate ---
+# --- Membership predicate (the Athena counterpart of Coq's In) ---
 
 declare mem : [Formula (List Formula)] -> Boolean
 
@@ -96,7 +174,10 @@ assert* mem-def :=
   [(~ (mem A nil))
    ((mem A (B :: G)) <==> (A = B | mem A G))]
 
-# --- Well-formedness of a derivation tree (clauses unchanged) ---
+# --- Well-formedness of a derivation tree ---
+#
+# The clauses mirror the five constructors of Coq's [derivable]:
+# Ax, Lnot-, R->, L-> (by membership, no Exchange), R->C.
 
 declare well-formed : [Deriv Fragment (List Formula) Succedent] -> Boolean
 
@@ -108,7 +189,8 @@ assert* wf-ax :=
 assert* wf-l-neg :=
   [((well-formed (l-neg-rule f G A d) f' G' S)
       <==>
-    (f = f' & G' = ((Neg A) :: G) & S = none-succ
+    (f = f' & G = G' & S = none-succ
+     & (mem (Neg A) G)
      & (well-formed d f G (some-succ A))))]
 
 assert* wf-r-arrow :=
@@ -120,15 +202,10 @@ assert* wf-r-arrow :=
 assert* wf-l-arrow :=
   [((well-formed (l-arrow-rule f G A B Sc d1 d2) f' G' S')
       <==>
-    (f = f' & G' = ((Impl A B) :: G) & Sc = S'
+    (f = f' & G = G' & Sc = S'
+     & (mem (Impl A B) G)
      & (well-formed d1 f G (some-succ A))
      & (well-formed d2 f (B :: G) Sc)))]
-
-assert* wf-exchange :=
-  [((well-formed (exchange-rule f x y Sc d) f' G' S')
-      <==>
-    (f = f' & G' = (y :: (x :: nil)) & Sc = S'
-     & (well-formed d f (x :: (y :: nil)) Sc)))]
 
 assert* wf-r-arrow-core :=
   [((well-formed (r-arrow-core-rule G A B d) f' G' S)
@@ -143,17 +220,10 @@ declare derivable : [Fragment (List Formula) Succedent] -> Boolean
 assert* derivable-def :=
   [((derivable f G S) <==> (exists ?d:Deriv . (well-formed ?d f G S)))]
 
-#============================================================================
-# GENERIC TOOLBOX
-#============================================================================
+# == Generic toolbox (adapted to the Version 6 clauses) ==
 
-# prove-trivia: proves a sentence p that is a conjunction (of arbitrary
-# depth) each of whose leaves is either a reflexive identity (t = t),
-# proved by !reflex, or a sentence already in the assumption base,
-# claimed by !claim. All leaves are first established (map-method),
-# then conj-intro assembles the conjunction (the conjuncts of a
-# sentence in the assumption base are themselves in the base,
-# cf. FPMICS Section 2.10).
+# prove-trivia: proves a conjunction whose leaves are reflexive
+# identities or sentences already in the assumption base.
 
 define prove-trivia :=
   method (p)
@@ -166,45 +236,14 @@ define prove-trivia :=
     | _ => (!claim p)
     }
 
-# wf-elim: elimination of a well-formedness clause. w is the premise
-# (well-formed (C ...) f' G' S); clause is the named list (wf-ax,
-# wf-l-neg, ...); instances is the uspec* instantiation list, in the
-# order validated by the long version:
-#   wf-ax           : [A G S f G' f']
-#   wf-l-neg        : [A G S d f G' f']
-#   wf-r-arrow      : [A B G S d f G' f']
-#   wf-l-arrow      : [A B G f G' S' Sc d1 d2 f']
-#   wf-exchange     : [d f x y G' S' Sc f']
-#   wf-r-arrow-core : [A B G S d G' f']
-# The result is the right-hand conjunction of the biconditional; its
-# conjuncts automatically enter the assumption base.
+# wf-elim: elimination of a well-formedness clause; instance order to
+# be validated empirically against the assert* quantifier order.
 
 define wf-elim :=
   method (w clause instances)
     (!mp (!left-iff (!uspec* (head clause) instances)) w)
 
-# refute-mem: derives false from (mem x L) in the assumption base,
-# provided that for each element h of L the inequality (x =/= h) is
-# already in the base. Structural recursion on the list term L; the
-# nil case is closed by the first clause of mem-def.
-
-define refute-mem :=
-  method (x L)
-    match L {
-      (h :: t) =>
-        let { disj := (!chain->
-                        [(mem x L) ==> (x = h | mem x t) [mem-def]]) }
-          (!cases disj
-            (assume e1 := (x = h)
-              (!absurd e1 (!claim (x =/= h))))
-            (assume e2 := (mem x t)
-              (!refute-mem x t)))
-    | _ => (!absurd (!claim (mem x nil))
-                    (!instance (head mem-def) [x]))
-    }
-
-# The five introductions, one per rule of F (R-> is never built, only
-# inverted; no introduction method for it).
+# The five introduction methods, one per constructor of Deriv.
 
 define ax! :=
   method (fr Gamma phi)
@@ -218,55 +257,48 @@ define ax! :=
 
 define lneg! :=
   method (fr Gamma phi dprem)
-    let { rhs := (fr = fr
-                  & ((Neg phi) :: Gamma) = ((Neg phi) :: Gamma)
-                  & none-succ = none-succ
+    let { rhs := (fr = fr & Gamma = Gamma & none-succ = none-succ
+                  & (mem (Neg phi) Gamma)
                   & (well-formed dprem fr Gamma (some-succ phi)));
           _ := (!prove-trivia rhs) }
       (!chain<-
         [(well-formed (l-neg-rule fr Gamma phi dprem)
-                      fr ((Neg phi) :: Gamma) none-succ)
+                      fr Gamma none-succ)
           <== rhs                                            [wf-l-neg]])
 
-define exch! :=
-  method (fr xf yf sc dprem)
-    let { rhs := (fr = fr
-                  & (yf :: (xf :: nil)) = (yf :: (xf :: nil))
-                  & sc = sc
-                  & (well-formed dprem fr (xf :: (yf :: nil)) sc));
+define rarrow! :=
+  method (fr Gamma phi psi dprem)
+    let { rhs := (fr = fr & Gamma = Gamma
+                  & (some-succ (Impl phi psi)) = (some-succ (Impl phi psi))
+                  & (well-formed dprem fr (phi :: Gamma) (some-succ psi)));
           _ := (!prove-trivia rhs) }
       (!chain<-
-        [(well-formed (exchange-rule fr xf yf sc dprem)
-                      fr (yf :: (xf :: nil)) sc)
-          <== rhs                                            [wf-exchange]])
+        [(well-formed (r-arrow-rule fr Gamma phi psi dprem)
+                      fr Gamma (some-succ (Impl phi psi)))
+          <== rhs                                            [wf-r-arrow]])
 
 define rac! :=
-  method (Gamma A B dprem)
+  method (Gamma phi psi dprem)
     let { rhs := (core-logic = core-logic & Gamma = Gamma
-                  & (some-succ (Impl A B)) = (some-succ (Impl A B))
-                  & (well-formed dprem core-logic (A :: Gamma) none-succ));
+                  & (some-succ (Impl phi psi)) = (some-succ (Impl phi psi))
+                  & (well-formed dprem core-logic (phi :: Gamma) none-succ));
           _ := (!prove-trivia rhs) }
       (!chain<-
-        [(well-formed (r-arrow-core-rule Gamma A B dprem)
-                      core-logic Gamma (some-succ (Impl A B)))
+        [(well-formed (r-arrow-core-rule Gamma phi psi dprem)
+                      core-logic Gamma (some-succ (Impl phi psi)))
           <== rhs                                            [wf-r-arrow-core]])
 
 define larrow! :=
-  method (fr Gamma A B sc dleft dright)
-    let { rhs := (fr = fr
-                  & ((Impl A B) :: Gamma) = ((Impl A B) :: Gamma)
-                  & sc = sc
-                  & (well-formed dleft fr Gamma (some-succ A))
-                  & (well-formed dright fr (B :: Gamma) sc));
+  method (fr Gamma phi psi sc dleft dright)
+    let { rhs := (fr = fr & Gamma = Gamma & sc = sc
+                  & (mem (Impl phi psi) Gamma)
+                  & (well-formed dleft fr Gamma (some-succ phi))
+                  & (well-formed dright fr (psi :: Gamma) sc));
           _ := (!prove-trivia rhs) }
       (!chain<-
-        [(well-formed (l-arrow-rule fr Gamma A B sc dleft dright)
-                      fr ((Impl A B) :: Gamma) sc)
+        [(well-formed (l-arrow-rule fr Gamma phi psi sc dleft dright)
+                      fr Gamma sc)
           <== rhs                                            [wf-l-arrow]])
-
-# derivable!: closes the existential on the witness d (whose
-# well-formedness is assumed to be in the base) and concludes
-# derivable.
 
 define derivable! :=
   method (fr Gamma S d)
@@ -276,506 +308,1304 @@ define derivable! :=
           <== (exists ?dd:Deriv . (well-formed ?dd fr Gamma S))
                                                              [derivable-def]])
 
+# == Block B -- Step 1: DNS.1 and DNS.2 are derivable ==
+
+# Recursive membership prover: (!mem! phi L) concludes (mem phi L)
+# whenever phi occurs syntactically in the list term L.
+
+define mem! :=
+  method (phi L)
+    match L {
+      (h :: t) =>
+        check {
+          (phi equal? h) =>
+            (!chain-> [(phi = phi)
+                       ==> (phi = h | mem phi t)   [alternate]
+                       ==> (mem phi L)             [mem-def]])
+        | else =>
+            let { _ := (!mem! phi t) }
+              (!chain-> [(mem phi t)
+                         ==> (phi = h | mem phi t) [alternate]
+                         ==> (mem phi L)           [mem-def]])
+        }
+    }
+
+# sub-rewrite!: from (Gsmall = Gmid) and sub := (forall A . mem A Gmid
+# ==> mem A Gbig), both in the base, concludes the subset sentence for
+# Gsmall/Gbig.
+
+define sub-rewrite! :=
+  method (Gsmall Gmid Gbig sub)
+    conclude (forall ?X:Formula . (mem ?X Gsmall) ==> (mem ?X Gbig))
+      pick-any X:Formula
+        assume (mem X Gsmall)
+          (!chain-> [(mem X Gsmall)
+                     ==> (mem X Gmid)  [(Gsmall = Gmid)]
+                     ==> (mem X Gbig)  [sub]])
+
+# sub-cons!: from sub := (forall A . mem A Gsmall ==> mem A Gbig) in
+# the base, concludes the subset sentence for (phi::Gsmall)/(phi::Gbig).
+
+define sub-cons! :=
+  method (phi Gsmall Gbig sub)
+    conclude (forall ?X:Formula .
+               (mem ?X (phi :: Gsmall)) ==> (mem ?X (phi :: Gbig)))
+      pick-any X:Formula
+        assume h := (mem X (phi :: Gsmall))
+          let { disj := (!chain-> [h ==> (X = phi | mem X Gsmall)
+                                                             [mem-def]]) }
+            (!cases disj
+              (assume e1 := (X = phi)
+                (!chain-> [e1 ==> (X = phi | mem X Gbig)     [alternate]
+                              ==> (mem X (phi :: Gbig))      [mem-def]]))
+              (assume e2 := (mem X Gsmall)
+                (!chain-> [e2 ==> (mem X Gbig)               [sub]
+                              ==> (X = phi | mem X Gbig)     [alternate]
+                              ==> (mem X (phi :: Gbig))      [mem-def]])))
+
+# un-derivable!: opens (derivable fr Gamma S) into its existential.
+
+define un-derivable! :=
+  method (fr Gamma S)
+    (!chain-> [(derivable fr Gamma S)
+               ==> (exists ?dd:Deriv . (well-formed ?dd fr Gamma S))
+                                                        [derivable-def]])
+
+# mem2-cases!: case analysis on a membership in a two-element context
+# (h1 :: (h2 :: nil)): the methods m1, m2 handle the equality cases and
+# must conclude goal; the nil case is discharged automatically.
+
+define mem2-cases! :=
+  method (hm x h1 h2 goal m1 m2)
+    let { d1 := (!chain-> [hm ==> (x = h1 | mem x (h2 :: nil))
+                                                         [mem-def]]) }
+      (!cases d1
+        (assume e1 := (x = h1) (!m1 e1))
+        (assume e2 := (mem x (h2 :: nil))
+          let { d2 := (!chain-> [e2 ==> (x = h2 | mem x nil)
+                                                         [mem-def]]) }
+            (!cases d2
+              (assume e3 := (x = h2) (!m2 e3))
+              (assume e4 := (mem x nil)
+                (!from-complements goal e4
+                                   (!uspec (head mem-def) x))))))
+
+# apply-mono!: applies a monotonicity induction hypothesis ih (for the
+# subtree dsub) to transport (well-formed dsub fr Gsmall S), known in
+# the base, into (derivable fr Gbig S), using the subset sentence
+# subsent (also in the base).
+
+define apply-mono! :=
+  method (ih dsub fr Gsmall S Gbig subsent)
+    (!mp (!uspec (!mp (!uspec* ih [fr Gsmall S])
+                      (!claim (well-formed dsub fr Gsmall S)))
+                 Gbig)
+         subsent)
+
 #============================================================================
-# THEOREM absurdity-core:  Var a, Neg(Var a) |-   in core-logic.
-# Coq: Exchange; L_neg; Ax.
+# THEOREM absurdity-core:  Var a, Neg (Var a) =>    in core-logic.
+# Coq: L_neg (by membership) over Ax -- no Exchange in Version 6.
 #============================================================================
 
 define absurdity-core :=
-  (forall ?a:Ide .
+  (forall ?a:Atom .
     (derivable core-logic
                ((Var ?a) :: ((Neg (Var ?a)) :: nil))
                none-succ))
 
 conclude absurdity-core
-  pick-any a:Ide
-    let { va := (Var a); na := (Neg va);
-          t-ax   := (ax-rule core-logic (va :: nil) va);
-          t-lneg := (l-neg-rule core-logic (va :: nil) va t-ax);
-          t-exch := (exchange-rule core-logic na va none-succ t-lneg);
-          _ := (!chain-> [(va = va) ==> (mem va (va :: nil)) [mem-def]]);
-          _ := (!ax!   core-logic (va :: nil) va);
-          _ := (!lneg! core-logic (va :: nil) va t-ax);
-          _ := (!exch! core-logic na va none-succ t-lneg) }
-      (!derivable! core-logic (va :: (na :: nil)) none-succ t-exch)
+  pick-any a:Atom
+    let { va := (Var a); na := (Neg va); ctx := (va :: (na :: nil));
+          t-ax   := (ax-rule core-logic ctx va);
+          t-lneg := (l-neg-rule core-logic ctx va t-ax);
+          _ := (!mem! va ctx);
+          _ := (!mem! na ctx);
+          _ := (!ax!   core-logic ctx va);
+          _ := (!lneg! core-logic ctx va t-ax) }
+      (!derivable! core-logic ctx none-succ t-lneg)
 
 #============================================================================
-# THEOREM DNS2-instantiated:
-#       A, D |-
-#  --------------------- DNS.2     (A = Var a, B = Var b, D = [Neg A])
-#  (A -> B) -> B, D |- B
-# Coq: L_arrow ( R_arrow_core H | Ax ).
+# THEOREM context-monotonicity (Coq: Lemma context_monotonicity).
+# NOT Weakening, NOT Cut: one derivation, rebuilt unchanged in a larger
+# pool of available assumptions. Structural induction on Deriv.
+#============================================================================
+
+define context-monotonicity :=
+  (forall ?d:Deriv .
+    (forall ?f:Fragment ?G:(List Formula) ?S:Succedent .
+      (well-formed ?d ?f ?G ?S) ==>
+      (forall ?G':(List Formula) .
+        (forall ?A:Formula . (mem ?A ?G) ==> (mem ?A ?G')) ==>
+        (derivable ?f ?G' ?S))))
+
+by-induction context-monotonicity {
+
+  (ax-rule f0 G0 A0) =>
+    pick-any fq:Fragment Gq:(List Formula) Sq:Succedent
+      assume w := (well-formed (ax-rule f0 G0 A0) fq Gq Sq)
+        let { _ := (!wf-elim w wf-ax [A0 G0 Sq f0 Gq fq]) }
+          pick-any Gp:(List Formula)
+            assume hsub := (forall ?A:Formula .
+                             (mem ?A Gq) ==> (mem ?A Gp))
+              let { _ := (!chain-> [(mem A0 G0)
+                                    ==> (mem A0 Gq)   [(G0 = Gq)]
+                                    ==> (mem A0 Gp)   [hsub]]);
+                    _ := (!ax! fq Gp A0);
+                    _ := (!derivable! fq Gp (some-succ A0)
+                                      (ax-rule fq Gp A0)) }
+                (!chain-> [(derivable fq Gp (some-succ A0))
+                           ==> (derivable fq Gp Sq)
+                                            [(Sq = (some-succ A0))]])
+
+| (dd as (l-neg-rule f0 G0 A0 d0)) =>
+    let { ih := (forall ?f:Fragment ?G:(List Formula) ?S:Succedent .
+                  (well-formed d0 ?f ?G ?S) ==>
+                  (forall ?G':(List Formula) .
+                    (forall ?A:Formula . (mem ?A ?G) ==> (mem ?A ?G')) ==>
+                    (derivable ?f ?G' ?S))) }
+    pick-any fq:Fragment Gq:(List Formula) Sq:Succedent
+      assume w := (well-formed dd fq Gq Sq)
+        let { _ := (!wf-elim w wf-l-neg [A0 G0 Sq d0 f0 Gq fq]) }
+          pick-any Gp:(List Formula)
+            assume hsub := (forall ?A:Formula .
+                             (mem ?A Gq) ==> (mem ?A Gp))
+              let { sub0 := (!sub-rewrite! G0 Gq Gp hsub);
+                    dprem := (!apply-mono! ih d0 f0 G0 (some-succ A0)
+                                           Gp sub0);
+                    ex := (!un-derivable! f0 Gp (some-succ A0)) }
+                pick-witness dw for ex
+                  let { _ := (!chain-> [(mem (Neg A0) G0)
+                                        ==> (mem (Neg A0) Gq) [(G0 = Gq)]
+                                        ==> (mem (Neg A0) Gp) [hsub]]);
+                        _ := (!lneg! f0 Gp A0 dw);
+                        _ := (!derivable! f0 Gp none-succ
+                                          (l-neg-rule f0 Gp A0 dw)) }
+                    (!chain-> [(derivable f0 Gp none-succ)
+                               ==> (derivable fq Gp none-succ) [(f0 = fq)]
+                               ==> (derivable fq Gp Sq)
+                                                [(Sq = none-succ)]])
+
+| (dd as (r-arrow-rule f0 G0 A0 B0 d0)) =>
+    let { ih := (forall ?f:Fragment ?G:(List Formula) ?S:Succedent .
+                  (well-formed d0 ?f ?G ?S) ==>
+                  (forall ?G':(List Formula) .
+                    (forall ?A:Formula . (mem ?A ?G) ==> (mem ?A ?G')) ==>
+                    (derivable ?f ?G' ?S))) }
+    pick-any fq:Fragment Gq:(List Formula) Sq:Succedent
+      assume w := (well-formed dd fq Gq Sq)
+        let { _ := (!wf-elim w wf-r-arrow [A0 B0 G0 Sq d0 f0 Gq fq]) }
+          pick-any Gp:(List Formula)
+            assume hsub := (forall ?A:Formula .
+                             (mem ?A Gq) ==> (mem ?A Gp))
+              let { sub0 := (!sub-rewrite! G0 Gq Gp hsub);
+                    sub1 := (!sub-cons! A0 G0 Gp sub0);
+                    dprem := (!apply-mono! ih d0 f0 (A0 :: G0)
+                                           (some-succ B0) (A0 :: Gp) sub1);
+                    ex := (!un-derivable! f0 (A0 :: Gp) (some-succ B0)) }
+                pick-witness dw for ex
+                  let { _ := (!rarrow! f0 Gp A0 B0 dw);
+                        _ := (!derivable! f0 Gp (some-succ (Impl A0 B0))
+                                          (r-arrow-rule f0 Gp A0 B0 dw)) }
+                    (!chain-> [(derivable f0 Gp (some-succ (Impl A0 B0)))
+                               ==> (derivable fq Gp (some-succ (Impl A0 B0)))
+                                                [(f0 = fq)]
+                               ==> (derivable fq Gp Sq)
+                                                [(Sq = (some-succ (Impl A0 B0)))]])
+
+| (dd as (l-arrow-rule f0 G0 A0 B0 Sc0 da db)) =>
+    let { ihA := (forall ?f:Fragment ?G:(List Formula) ?S:Succedent .
+                   (well-formed da ?f ?G ?S) ==>
+                   (forall ?G':(List Formula) .
+                     (forall ?A:Formula . (mem ?A ?G) ==> (mem ?A ?G')) ==>
+                     (derivable ?f ?G' ?S)));
+          ihB := (forall ?f:Fragment ?G:(List Formula) ?S:Succedent .
+                   (well-formed db ?f ?G ?S) ==>
+                   (forall ?G':(List Formula) .
+                     (forall ?A:Formula . (mem ?A ?G) ==> (mem ?A ?G')) ==>
+                     (derivable ?f ?G' ?S))) }
+    pick-any fq:Fragment Gq:(List Formula) Sq:Succedent
+      assume w := (well-formed dd fq Gq Sq)
+        let { _ := (!wf-elim w wf-l-arrow [A0 B0 G0 f0 Gq Sq Sc0 da db fq]) }
+          pick-any Gp:(List Formula)
+            assume hsub := (forall ?A:Formula .
+                             (mem ?A Gq) ==> (mem ?A Gp))
+              let { sub0 := (!sub-rewrite! G0 Gq Gp hsub);
+                    subB := (!sub-cons! B0 G0 Gp sub0);
+                    dl := (!apply-mono! ihA da f0 G0 (some-succ A0)
+                                        Gp sub0);
+                    exl := (!un-derivable! f0 Gp (some-succ A0)) }
+                pick-witness dwl for exl
+                  let { dr := (!apply-mono! ihB db f0 (B0 :: G0) Sc0
+                                            (B0 :: Gp) subB);
+                        exr := (!un-derivable! f0 (B0 :: Gp) Sc0) }
+                    pick-witness dwr for exr
+                      let { _ := (!chain->
+                              [(mem (Impl A0 B0) G0)
+                               ==> (mem (Impl A0 B0) Gq)  [(G0 = Gq)]
+                               ==> (mem (Impl A0 B0) Gp)  [hsub]]);
+                            _ := (!larrow! f0 Gp A0 B0 Sc0 dwl dwr);
+                            _ := (!derivable! f0 Gp Sc0
+                                    (l-arrow-rule f0 Gp A0 B0 Sc0 dwl dwr)) }
+                        (!chain-> [(derivable f0 Gp Sc0)
+                                   ==> (derivable fq Gp Sc0)  [(f0 = fq)]
+                                   ==> (derivable fq Gp Sq)   [(Sc0 = Sq)]])
+
+| (dd as (r-arrow-core-rule G0 A0 B0 d0)) =>
+    let { ih := (forall ?f:Fragment ?G:(List Formula) ?S:Succedent .
+                  (well-formed d0 ?f ?G ?S) ==>
+                  (forall ?G':(List Formula) .
+                    (forall ?A:Formula . (mem ?A ?G) ==> (mem ?A ?G')) ==>
+                    (derivable ?f ?G' ?S))) }
+    pick-any fq:Fragment Gq:(List Formula) Sq:Succedent
+      assume w := (well-formed dd fq Gq Sq)
+        let { _ := (!wf-elim w wf-r-arrow-core [A0 B0 G0 Sq d0 Gq fq]) }
+          pick-any Gp:(List Formula)
+            assume hsub := (forall ?A:Formula .
+                             (mem ?A Gq) ==> (mem ?A Gp))
+              let { sub0 := (!sub-rewrite! G0 Gq Gp hsub);
+                    sub1 := (!sub-cons! A0 G0 Gp sub0);
+                    dprem := (!apply-mono! ih d0 core-logic (A0 :: G0)
+                                           none-succ (A0 :: Gp) sub1);
+                    ex := (!un-derivable! core-logic (A0 :: Gp) none-succ) }
+                pick-witness dw for ex
+                  let { _ := (!rac! Gp A0 B0 dw);
+                        _ := (!derivable! core-logic Gp
+                                          (some-succ (Impl A0 B0))
+                                          (r-arrow-core-rule Gp A0 B0 dw)) }
+                    (!chain-> [(derivable core-logic Gp
+                                          (some-succ (Impl A0 B0)))
+                               ==> (derivable fq Gp (some-succ (Impl A0 B0)))
+                                                [(fq = core-logic)]
+                               ==> (derivable fq Gp Sq)
+                                                [(Sq = (some-succ (Impl A0 B0)))]])
+}
+
+# --- Context abbreviations, shared by every statement below ---
+
+define (claim1-ctx A) := (A :: ((Neg A) :: nil))
+define (dns1-ctx A B) := ((Impl (Impl A B) B) :: ((Neg A) :: nil))
+
+#============================================================================
+# THEOREM DNS1-in-F (Coq: DNS1_in_F): DNS.1 is derivable uniformly in
+# the fragment indicator f, hence at once in F_M and in F_C.
+# Coq: L_arrow ( R_arrow (context_monotonicity H) | Ax ).
+#============================================================================
+
+define DNS1-in-F :=
+  (forall ?f:Fragment ?a:Atom ?b:Atom .
+    (derivable ?f (claim1-ctx (Var ?a)) (some-succ (Var ?b)))
+    ==>
+    (derivable ?f (dns1-ctx (Var ?a) (Var ?b)) (some-succ (Var ?b))))
+
+conclude DNS1-in-F
+  pick-any fr:Fragment a:Atom b:Atom
+    let { va := (Var a); vb := (Var b); na := (Neg va);
+          iab := (Impl va vb); dns := (Impl iab vb);
+          ctx1 := (claim1-ctx va); ctx2 := (dns1-ctx va vb) }
+    assume H := (derivable fr ctx1 (some-succ vb))
+      let { ex1 := (!un-derivable! fr ctx1 (some-succ vb)) }
+        pick-witness d1 for ex1
+          let { sub := conclude (forall ?X:Formula .
+                                  (mem ?X ctx1) ==> (mem ?X (va :: ctx2)))
+                  pick-any X:Formula
+                    assume h := (mem X ctx1)
+                      (!mem2-cases! h X va na (mem X (va :: ctx2))
+                         (method (e1)
+                           (!chain-> [e1 ==> (X = va | mem X ctx2)
+                                                            [alternate]
+                                         ==> (mem X (va :: ctx2))
+                                                            [mem-def]]))
+                         (method (e3)
+                           let { _ := (!mem! na (va :: ctx2)) }
+                             (!chain-> [(mem na (va :: ctx2))
+                                        ==> (mem X (va :: ctx2)) [e3]])));
+                ihd1 := (!uspec context-monotonicity d1);
+                _ := (!apply-mono! ihd1 d1 fr ctx1 (some-succ vb)
+                                   (va :: ctx2) sub);
+                ex2 := (!un-derivable! fr (va :: ctx2) (some-succ vb)) }
+            pick-witness d2 for ex2
+              let { t-ra := (r-arrow-rule fr ctx2 va vb d2);
+                    t-ax := (ax-rule fr (vb :: ctx2) vb);
+                    _ := (!rarrow! fr ctx2 va vb d2);
+                    _ := (!mem! vb (vb :: ctx2));
+                    _ := (!ax! fr (vb :: ctx2) vb);
+                    _ := (!mem! dns ctx2);
+                    _ := (!larrow! fr ctx2 iab vb (some-succ vb)
+                                   t-ra t-ax) }
+                (!derivable! fr ctx2 (some-succ vb)
+                             (l-arrow-rule fr ctx2 iab vb (some-succ vb)
+                                           t-ra t-ax))
+
+#============================================================================
+# THEOREM DNS2-instantiated (Coq: DNS2_instantiated): DNS.2 in the
+# Core reading, through R->C alone.
+# Coq: L_arrow ( context_monotonicity (R_arrow_core HD) | Ax ).
 #============================================================================
 
 define DNS2-instantiated :=
-  (forall ?a:Ide ?b:Ide .
-    (derivable core-logic
-               ((Var ?a) :: ((Neg (Var ?a)) :: nil))
-               none-succ)
+  (forall ?a:Atom ?b:Atom .
+    (derivable core-logic (claim1-ctx (Var ?a)) none-succ)
     ==>
-    (derivable core-logic
-               ((Impl (Impl (Var ?a) (Var ?b)) (Var ?b))
-                 :: ((Neg (Var ?a)) :: nil))
+    (derivable core-logic (dns1-ctx (Var ?a) (Var ?b))
                (some-succ (Var ?b))))
 
 conclude DNS2-instantiated
-  pick-any a:Ide b:Ide
-    let { va := (Var a); vb := (Var b); na := (Neg va) }
-      assume hyp := (derivable core-logic (va :: (na :: nil)) none-succ)
-        let { ex-prem := (!chain->
-                           [hyp
-                             ==> (exists ?d:Deriv .
-                                    (well-formed ?d core-logic
-                                       (va :: (na :: nil)) none-succ))
-                                 [derivable-def]]) }
-          pick-witness w for ex-prem
-            # (well-formed w core-logic [va, na] none-succ) is now in
-            # the assumption base.
-            let { t-rac := (r-arrow-core-rule (na :: nil) va vb w);
-                  t-ax  := (ax-rule core-logic (vb :: (na :: nil)) vb);
-                  t-la  := (l-arrow-rule core-logic (na :: nil)
-                                         (Impl va vb) vb
-                                         (some-succ vb) t-rac t-ax);
-                  _ := (!rac! (na :: nil) va vb w);
-                  _ := (!chain-> [(vb = vb)
-                                   ==> (mem vb (vb :: (na :: nil)))
-                                       [mem-def]]);
-                  _ := (!ax! core-logic (vb :: (na :: nil)) vb);
-                  _ := (!larrow! core-logic (na :: nil)
-                                 (Impl va vb) vb (some-succ vb)
-                                 t-rac t-ax) }
-              (!derivable! core-logic
-                           ((Impl (Impl va vb) vb) :: (na :: nil))
-                           (some-succ vb)
-                           t-la)
-
-#============================================================================
-# LEMMA R-arrow-inv-NegA-min:
-#    [Neg A] |- A -> B
-#    -----------------  (inversion of R-> over the singleton context)
-#    A, [Neg A] |- B
-#
-# datatype-cases on the witness: five impossible branches (closed by
-# no-confusion via wf-elim + absurd/refute-mem), one productive (R->).
-#============================================================================
-
-define R-arrow-inv-NegA-min :=
-  (forall ?a:Ide ?b:Ide .
-    (derivable minimal-F
-               ((Neg (Var ?a)) :: nil)
-               (some-succ (Impl (Var ?a) (Var ?b))))
-    ==>
-    (derivable minimal-F
-               ((Var ?a) :: ((Neg (Var ?a)) :: nil))
-               (some-succ (Var ?b))))
-
-conclude R-arrow-inv-NegA-min
-  pick-any a:Ide b:Ide
+  pick-any a:Atom b:Atom
     let { va := (Var a); vb := (Var b); na := (Neg va);
-          ab := (Impl va vb);             # the succedent to invert
-          ctx := (na :: nil);
-          succ := (some-succ ab);
-          goal := (derivable minimal-F (va :: (na :: nil)) (some-succ vb)) }
-      assume hyp := (derivable minimal-F ctx succ)
-        let { ex-d := (!chain->
-                        [hyp
-                          ==> (exists ?d:Deriv .
-                                 (well-formed ?d minimal-F ctx succ))
-                              [derivable-def]]);
-              # The conditional property mentions the case variable
-              # (same structural trick as in the long version).
-              inv-prop :=
-                (forall ?dd:Deriv .
-                  (well-formed ?dd minimal-F ctx succ) ==> goal);
-              inv-proof :=
-                datatype-cases inv-prop {
-                    (ax-rule f0 G0 phi0) =>
-                      # mem (A->B) [Neg A] is impossible.
-                      assume w := (well-formed (ax-rule f0 G0 phi0)
-                                     minimal-F ctx succ)
-                        let { _ := (!wf-elim w wf-ax
-                                     [phi0 G0 succ f0 ctx minimal-F]);
-                              phi0-eq := (!chain->
-                                           [(succ = some-succ phi0)
-                                             ==> (ab = phi0)
-                                                 [(datatype-axioms "Succedent")]]);
-                              _ := (!chain->
-                                     [(mem phi0 G0)
-                                       ==> (mem ab ctx)
-                                           [phi0-eq (G0 = ctx)]]);
-                              # ab =/= na, by symmetrized no-confusion.
-                              _ := (!sym (!instance neg-neq-impl [va va vb]));
-                              _ := (!refute-mem ab ctx) }
-                          (!from-false goal)
-                  | (l-neg-rule f0 G0 A0 d0) =>
-                      # Succedent none-succ vs some-succ: impossible.
-                      assume w := (well-formed (l-neg-rule f0 G0 A0 d0)
-                                     minimal-F ctx succ)
-                        let { _ := (!wf-elim w wf-l-neg
-                                     [A0 G0 succ d0 f0 ctx minimal-F]);
-                              _ := (!absurd (succ = none-succ)
-                                     (!sym (!instance none-neq-some [ab]))) }
-                          (!from-false goal)
-                  | (r-arrow-rule f0 G0 A0 B0 d0) =>
-                      # PRODUCTIVE case: the premise of R-> is the goal.
-                      assume w := (well-formed (r-arrow-rule f0 G0 A0 B0 d0)
-                                     minimal-F ctx succ)
-                        let { _ := (!wf-elim w wf-r-arrow
-                                     [A0 B0 G0 succ d0 f0 ctx minimal-F]);
-                              impl-eq := (!chain->
-                                           [(succ = some-succ (Impl A0 B0))
-                                             ==> (ab = (Impl A0 B0))
-                                                 [(datatype-axioms "Succedent")]]);
-                              a-eq := (!chain->
-                                        [impl-eq ==> (va = A0)
-                                             [(datatype-axioms "Formula")]]);
-                              b-eq := (!chain->
-                                        [impl-eq ==> (vb = B0)
-                                             [(datatype-axioms "Formula")]]);
-                              _ := (!chain->
-                                     [(well-formed d0 f0 (A0 :: G0)
-                                        (some-succ B0))
+          iab := (Impl va vb); dns := (Impl iab vb);
+          ctx1 := (claim1-ctx va); ctx2 := (dns1-ctx va vb) }
+    assume HD := (derivable core-logic ctx1 none-succ)
+      let { ex0 := (!un-derivable! core-logic ctx1 none-succ) }
+        pick-witness d0 for ex0
+          let { t-rac := (r-arrow-core-rule ((Neg va) :: nil) va vb d0);
+                _ := (!rac! ((Neg va) :: nil) va vb d0);
+                sub := conclude (forall ?X:Formula .
+                                  (mem ?X ((Neg va) :: nil))
+                                  ==> (mem ?X ctx2))
+                  pick-any X:Formula
+                    assume h := (mem X ((Neg va) :: nil))
+                      let { disj := (!chain-> [h ==> (X = na | mem X nil)
+                                                             [mem-def]]) }
+                        (!cases disj
+                          (assume e1 := (X = na)
+                            let { _ := (!mem! na ctx2) }
+                              (!chain-> [(mem na ctx2)
+                                         ==> (mem X ctx2)    [e1]]))
+                          (assume e2 := (mem X nil)
+                            (!from-complements (mem X ctx2)
+                               e2 (!uspec (head mem-def) X))));
+                ih := (!uspec context-monotonicity t-rac);
+                _ := (!apply-mono! ih t-rac core-logic ((Neg va) :: nil)
+                                   (some-succ iab) ctx2 sub);
+                ex1 := (!un-derivable! core-logic ctx2 (some-succ iab)) }
+            pick-witness d1 for ex1
+              let { t-ax := (ax-rule core-logic (vb :: ctx2) vb);
+                    _ := (!mem! vb (vb :: ctx2));
+                    _ := (!ax! core-logic (vb :: ctx2) vb);
+                    _ := (!mem! dns ctx2);
+                    _ := (!larrow! core-logic ctx2 iab vb (some-succ vb)
+                                   d1 t-ax) }
+                (!derivable! core-logic ctx2 (some-succ vb)
+                             (l-arrow-rule core-logic ctx2 iab vb
+                                           (some-succ vb) d1 t-ax))
+
+# == Block C -- Step 2: DNS.1 is invertible in F_M ==
+
+# Named injectivity axioms.
+
+define var-inj  := (head (tail (tail (tail formula-axioms))))
+define impl-inj := (head (tail (tail (tail (tail (tail formula-axioms))))))
+define some-inj := (head (tail succ-axioms))
+
+# neq-sym!: from the freshly derived (~ (l = r)), concludes (r =/= l).
+
+define neq-sym! :=
+  method (prem)
+    match prem {
+      (~ (= l r)) =>
+        (!by-contradiction (r =/= l)
+          (assume h := (r = l)
+            (!absurd (!sym h) (!claim prem))))
+    }
+
+# neq-atoms!: concludes (x =/= y) provided (x =/= y) or (y =/= x) is in
+# the assumption base.
+
+define neq-atoms! :=
+  method (x y)
+    try {
+      (!claim (x =/= y))
+    | (!by-contradiction (x =/= y)
+        (assume h := (x = y)
+          (!absurd (!sym h) (!claim (y =/= x)))))
+    }
+
+# neq-formulas!: proves (p =/= q) for two structurally distinct formula
+# terms, recursively, from the no-confusion and injectivity axioms; at
+# the leaves, atom inequalities are looked up in the assumption base.
+
+define neq-formulas! :=
+  method (p q)
+    match [p q] {
+      [(Var x) (Var y)] =>
+        (!by-contradiction (p =/= q)
+          (assume h := (p = q)
+            (!absurd (!chain-> [h ==> (x = y) [var-inj]])
+                     (!neq-atoms! x y))))
+    | [(Var x) (Neg y)]     => (!uspec* var-neq-neg [x y])
+    | [(Neg y) (Var x)]     => (!neq-sym! (!uspec* var-neq-neg [x y]))
+    | [(Var x) (Impl y z)]  => (!uspec* var-neq-impl [x y z])
+    | [(Impl y z) (Var x)]  => (!neq-sym! (!uspec* var-neq-impl [x y z]))
+    | [(Neg x) (Impl y z)]  => (!uspec* neg-neq-impl [x y z])
+    | [(Impl y z) (Neg x)]  => (!neq-sym! (!uspec* neg-neq-impl [x y z]))
+    | [(Impl p1 p2) (Impl q1 q2)] =>
+        check {
+          (p1 equal? q1) =>
+            (!by-contradiction (p =/= q)
+              (assume h := (p = q)
+                (!absurd (!right-and (!chain-> [h ==> (p1 = q1 & p2 = q2)
+                                                        [impl-inj]]))
+                         (!neq-formulas! p2 q2))))
+        | else =>
+            (!by-contradiction (p =/= q)
+              (assume h := (p = q)
+                (!absurd (!left-and (!chain-> [h ==> (p1 = q1 & p2 = q2)
+                                                       [impl-inj]]))
+                         (!neq-formulas! p1 q1))))
+        }
+    }
+
+# succ-neq!: given (Sq = (some-succ p)) in the base, and p, q
+# structurally distinct, concludes (Sq =/= (some-succ q)).
+
+define succ-neq! :=
+  method (Sq p q)
+    let { pq := (!neq-formulas! p q) }
+      (!by-contradiction (Sq =/= (some-succ q))
+        (assume h := (Sq = (some-succ q))
+          let { e := (!chain [(some-succ p)
+                              = Sq              [(Sq = (some-succ p))]
+                              = (some-succ q)   [h]]) }
+            (!absurd (!chain-> [e ==> (p = q) [some-inj]]) pq)))
+
+# none-neq!: given (Sq = none-succ) in the base, concludes
+# (Sq =/= (some-succ q)).
+
+define none-neq! :=
+  method (Sq q)
+    (!by-contradiction (Sq =/= (some-succ q))
+      (assume h := (Sq = (some-succ q))
+        let { e := (!chain [none-succ
+                            = Sq              [(Sq = none-succ)]
+                            = (some-succ q)   [h]]) }
+          (!absurd e (!uspec none-neq-some q))))
+
+#============================================================================
+# THEOREM DNS1-inversion-lemma (Coq: DNS1_inversion_lemma).
+# Structural induction on derivations -- von Plato's method, adapted to
+# extensional contexts: the induction is carried under an invariant on
+# contexts included in {A, not-A, (A->B)->B}, and establishes that no
+# F_M-derivation from such a context concludes B or A->B. The case
+# r-arrow-core-rule is excluded by the fragment indicator: the Athena
+# counterpart of Coq's (discriminate Hf).
+#============================================================================
+
+define (inv-succedents A B S) :=
+  ((S =/= (some-succ B)) & (S =/= (some-succ (Impl A B))))
+
+define DNS1-inversion-lemma :=
+  (forall ?a:Atom ?b:Atom .
+    ?a =/= ?b ==>
+    (forall ?d:Deriv .
+      (forall ?f:Fragment ?G:(List Formula) ?S:Succedent .
+        (well-formed ?d ?f ?G ?S) ==>
+        ?f = minimal-F ==>
+        (forall ?X:Formula . (mem ?X ?G) ==>
+          (?X = (Var ?a) | ?X = (Neg (Var ?a)) |
+           ?X = (Impl (Impl (Var ?a) (Var ?b)) (Var ?b)))) ==>
+        (inv-succedents (Var ?a) (Var ?b) ?S))))
+
+conclude DNS1-inversion-lemma
+  pick-any a:Atom b:Atom
+    assume hab := (a =/= b)
+      let { va := (Var a); vb := (Var b); na := (Neg va);
+            iab := (Impl va vb); dns := (Impl iab vb);
+            body :=
+              (forall ?d:Deriv .
+                (forall ?f:Fragment ?G:(List Formula) ?S:Succedent .
+                  (well-formed ?d ?f ?G ?S) ==>
+                  ?f = minimal-F ==>
+                  (forall ?X:Formula . (mem ?X ?G) ==>
+                    (?X = va | ?X = na | ?X = dns)) ==>
+                  (inv-succedents va vb ?S))) }
+      by-induction body {
+
+        (ax-rule f0 G0 A0) =>
+          pick-any fq:Fragment Gq:(List Formula) Sq:Succedent
+            assume w := (well-formed (ax-rule f0 G0 A0) fq Gq Sq)
+              let { _ := (!wf-elim w wf-ax [A0 G0 Sq f0 Gq fq]) }
+              assume hf := (fq = minimal-F)
+                assume hinv := (forall ?X:Formula . (mem ?X Gq) ==>
+                                 (?X = va | ?X = na | ?X = dns))
+                  let { disj := (!chain->
+                          [(mem A0 G0)
+                           ==> (mem A0 Gq)                  [(G0 = Gq)]
+                           ==> (A0 = va | A0 = na | A0 = dns) [hinv]]) }
+                    (!cases disj
+                      (assume e1 := (A0 = va)
+                        let { _ := (!chain->
+                                [(Sq = (some-succ A0))
+                                 ==> (Sq = (some-succ va))  [e1]]) }
+                          (!both (!succ-neq! Sq va vb)
+                                 (!succ-neq! Sq va iab)))
+                      (assume e2 := (A0 = na)
+                        let { _ := (!chain->
+                                [(Sq = (some-succ A0))
+                                 ==> (Sq = (some-succ na))  [e2]]) }
+                          (!both (!succ-neq! Sq na vb)
+                                 (!succ-neq! Sq na iab)))
+                      (assume e3 := (A0 = dns)
+                        let { _ := (!chain->
+                                [(Sq = (some-succ A0))
+                                 ==> (Sq = (some-succ dns)) [e3]]) }
+                          (!both (!succ-neq! Sq dns vb)
+                                 (!succ-neq! Sq dns iab))))
+
+      | (l-neg-rule f0 G0 A0 d0) =>
+          pick-any fq:Fragment Gq:(List Formula) Sq:Succedent
+            assume w := (well-formed (l-neg-rule f0 G0 A0 d0) fq Gq Sq)
+              let { _ := (!wf-elim w wf-l-neg [A0 G0 Sq d0 f0 Gq fq]) }
+              assume hf := (fq = minimal-F)
+                assume hinv := (forall ?X:Formula . (mem ?X Gq) ==>
+                                 (?X = va | ?X = na | ?X = dns))
+                  (!both (!none-neq! Sq vb) (!none-neq! Sq iab))
+
+      | (r-arrow-rule f0 G0 A0 B0 d0) =>
+          let { ih := (forall ?f:Fragment ?G:(List Formula) ?S:Succedent .
+                        (well-formed d0 ?f ?G ?S) ==>
+                        ?f = minimal-F ==>
+                        (forall ?X:Formula . (mem ?X ?G) ==>
+                          (?X = va | ?X = na | ?X = dns)) ==>
+                        (inv-succedents va vb ?S)) }
+          pick-any fq:Fragment Gq:(List Formula) Sq:Succedent
+            assume w := (well-formed (r-arrow-rule f0 G0 A0 B0 d0) fq Gq Sq)
+              let { _ := (!wf-elim w wf-r-arrow [A0 B0 G0 Sq d0 f0 Gq fq]) }
+              assume hf := (fq = minimal-F)
+                assume hinv := (forall ?X:Formula . (mem ?X Gq) ==>
+                                 (?X = va | ?X = na | ?X = dns))
+                  let { left := (!succ-neq! Sq (Impl A0 B0) vb);
+                        right :=
+                          (!by-contradiction
+                            (Sq =/= (some-succ iab))
+                            (assume h := (Sq = (some-succ iab))
+                              let { e := (!chain
+                                      [(some-succ (Impl A0 B0))
+                                       = Sq  [(Sq = (some-succ (Impl A0 B0)))]
+                                       = (some-succ iab) [h]]);
+                                    c := (!chain->
+                                      [e ==> ((Impl A0 B0) = iab) [some-inj]
+                                         ==> (A0 = va & B0 = vb)  [impl-inj]]);
+                                    pw := (!chain->
+                                      [(well-formed d0 f0 (A0 :: G0)
+                                                    (some-succ B0))
                                        ==> (well-formed d0 minimal-F
-                                              (va :: (na :: nil))
-                                              (some-succ vb))
-                                           [(f0 = minimal-F) (G0 = ctx)
-                                            a-eq b-eq]]) }
-                          (!derivable! minimal-F (va :: (na :: nil))
-                                       (some-succ vb) d0)
-                  | (l-arrow-rule f0 G0 A0 B0 sc0 d1 d2) =>
-                      # Context head Neg vs Impl: impossible.
-                      assume w := (well-formed
-                                     (l-arrow-rule f0 G0 A0 B0 sc0 d1 d2)
-                                     minimal-F ctx succ)
-                        let { _ := (!wf-elim w wf-l-arrow
-                                     [A0 B0 G0 f0 ctx succ sc0 d1 d2
-                                      minimal-F]);
-                              head-eq := (!chain->
-                                           [(ctx = ((Impl A0 B0) :: G0))
-                                             ==> (na = (Impl A0 B0))
-                                                 [(datatype-axioms "List")]]);
-                              _ := (!absurd head-eq
-                                     (!instance neg-neq-impl [va A0 B0])) }
-                          (!from-false goal)
-                  | (exchange-rule f0 xf0 yf0 sc0 d0) =>
-                      # Singleton vs doubleton context: impossible.
-                      assume w := (well-formed
-                                     (exchange-rule f0 xf0 yf0 sc0 d0)
-                                     minimal-F ctx succ)
-                        let { _ := (!wf-elim w wf-exchange
-                                     [d0 f0 xf0 yf0 ctx succ sc0 minimal-F]);
-                              tail-eq := (!chain->
-                                           [(ctx = (yf0 :: (xf0 :: nil)))
-                                             ==> (nil = (xf0 :: nil))
-                                                 [(datatype-axioms "List")]]);
-                              nil-noconf := (!chain->
-                                              [true
-                                                ==> (nil =/= (xf0 :: nil))
-                                                    [(datatype-axioms "List")]]);
-                              _ := (!absurd tail-eq nil-noconf) }
-                          (!from-false goal)
-                  | (r-arrow-core-rule G0 A0 B0 d0) =>
-                      # Fragment core-logic vs minimal-F: impossible.
-                      assume w := (well-formed
-                                     (r-arrow-core-rule G0 A0 B0 d0)
-                                     minimal-F ctx succ)
-                        let { _ := (!wf-elim w wf-r-arrow-core
-                                     [A0 B0 G0 succ d0 ctx minimal-F]);
-                              _ := (!absurd (minimal-F = core-logic)
-                                     (head (datatype-axioms "Fragment"))) }
-                          (!from-false goal)
-                }
-            }
-          pick-witness w for ex-d wf-w
-            (!mp (!uspec inv-proof w) wf-w)
+                                              (va :: Gq) (some-succ vb))
+                                           [(f0 = fq) (fq = minimal-F)
+                                            (G0 = Gq) (A0 = va) (B0 = vb)]]);
+                                    hinv' := conclude
+                                        (forall ?X:Formula .
+                                          (mem ?X (va :: Gq)) ==>
+                                          (?X = va | ?X = na | ?X = dns))
+                                      pick-any X:Formula
+                                        assume hm := (mem X (va :: Gq))
+                                          let { d2 := (!chain->
+                                                  [hm ==> (X = va | mem X Gq)
+                                                             [mem-def]]) }
+                                            (!cases d2
+                                              (assume e1 := (X = va)
+                                                (!chain->
+                                                  [e1 ==> (X = va | X = na
+                                                           | X = dns)
+                                                             [alternate]]))
+                                              (assume e2 := (mem X Gq)
+                                                (!chain->
+                                                  [e2 ==> (X = va | X = na
+                                                           | X = dns)
+                                                             [hinv]])));
+                                    conj := (!mp (!mp (!mp
+                                              (!uspec* ih
+                                                [minimal-F (va :: Gq)
+                                                 (some-succ vb)])
+                                              pw)
+                                              (!reflex minimal-F))
+                                              hinv') }
+                                (!absurd (!reflex (some-succ vb))
+                                         (!left-and conj)))) }
+                    (!both left right)
+
+      | (l-arrow-rule f0 G0 A0 B0 Sc0 da db) =>
+          let { ihA := (forall ?f:Fragment ?G:(List Formula) ?S:Succedent .
+                         (well-formed da ?f ?G ?S) ==>
+                         ?f = minimal-F ==>
+                         (forall ?X:Formula . (mem ?X ?G) ==>
+                           (?X = va | ?X = na | ?X = dns)) ==>
+                         (inv-succedents va vb ?S)) }
+          pick-any fq:Fragment Gq:(List Formula) Sq:Succedent
+            assume w := (well-formed (l-arrow-rule f0 G0 A0 B0 Sc0 da db)
+                                     fq Gq Sq)
+              let { _ := (!wf-elim w wf-l-arrow
+                                   [A0 B0 G0 f0 Gq Sq Sc0 da db fq]) }
+              assume hf := (fq = minimal-F)
+                assume hinv := (forall ?X:Formula . (mem ?X Gq) ==>
+                                 (?X = va | ?X = na | ?X = dns))
+                  let { disj := (!chain->
+                          [(mem (Impl A0 B0) G0)
+                           ==> (mem (Impl A0 B0) Gq)        [(G0 = Gq)]
+                           ==> ((Impl A0 B0) = va | (Impl A0 B0) = na
+                                | (Impl A0 B0) = dns)       [hinv]]);
+                        goal := (inv-succedents va vb Sq) }
+                    (!cases disj
+                      (assume e1 := ((Impl A0 B0) = va)
+                        let { _ := (!absurd e1
+                                     (!neq-formulas! (Impl A0 B0) va)) }
+                          (!from-false goal))
+                      (assume e2 := ((Impl A0 B0) = na)
+                        let { _ := (!absurd e2
+                                     (!neq-formulas! (Impl A0 B0) na)) }
+                          (!from-false goal))
+                      (assume e3 := ((Impl A0 B0) = dns)
+                        let { c := (!chain->
+                                [e3 ==> (A0 = iab & B0 = vb) [impl-inj]]);
+                              pw := (!chain->
+                                [(well-formed da f0 G0 (some-succ A0))
+                                 ==> (well-formed da minimal-F Gq
+                                        (some-succ iab))
+                                     [(f0 = fq) (fq = minimal-F)
+                                      (G0 = Gq) (A0 = iab)]]);
+                              conj := (!mp (!mp (!mp
+                                        (!uspec* ihA
+                                          [minimal-F Gq (some-succ iab)])
+                                        pw)
+                                        (!reflex minimal-F))
+                                        hinv);
+                              _ := (!absurd (!reflex (some-succ iab))
+                                            (!right-and conj)) }
+                          (!from-false goal)))
+
+      | (r-arrow-core-rule G0 A0 B0 d0) =>
+          pick-any fq:Fragment Gq:(List Formula) Sq:Succedent
+            assume w := (well-formed (r-arrow-core-rule G0 A0 B0 d0)
+                                     fq Gq Sq)
+              let { _ := (!wf-elim w wf-r-arrow-core [A0 B0 G0 Sq d0 Gq fq]) }
+              assume hf := (fq = minimal-F)
+                assume hinv := (forall ?X:Formula . (mem ?X Gq) ==>
+                                 (?X = va | ?X = na | ?X = dns))
+                  let { e := (!chain [minimal-F
+                                      = fq          [hf]
+                                      = core-logic  [(fq = core-logic)]]);
+                        _ := (!absurd e min-neq-core) }
+                    (!from-false (inv-succedents va vb Sq))
+      }
+
+# into-disj3!: sends an equality (X = h) into the three-way context
+# disjunction, h being one of its members.
+
+define into-disj3! :=
+  method (e va na dns)
+    match e {
+      (= X h) =>
+        check {
+          (h equal? va) =>
+            (!chain-> [e ==> (X = va | X = na | X = dns)  [alternate]])
+        | else =>
+            (!chain-> [e ==> (X = na | X = dns)           [alternate]
+                          ==> (X = va | X = na | X = dns) [alternate]])
+        }
+    }
+
+# inv-ctx!: proves the context invariant of the inversion lemma for a
+# two-element context (h :: ((Neg va) :: nil)), h being va (context of
+# Claim 1) or dns (context of the DNS.1 conclusion).
+
+define inv-ctx! :=
+  method (h va na dns)
+    conclude (forall ?X:Formula .
+               (mem ?X (h :: (na :: nil))) ==>
+               (?X = va | ?X = na | ?X = dns))
+      pick-any X:Formula
+        assume hm := (mem X (h :: (na :: nil)))
+          (!mem2-cases! hm X h na (X = va | X = na | X = dns)
+             (method (e) (!into-disj3! e va na dns))
+             (method (e) (!into-disj3! e va na dns)))
+
+# --- Corollaries of the inversion lemma (Coq: Block C, Theorems 3-5;
+#     ordering as in the Lean twin, where the invertibility is obtained
+#     from the underivability of the conclusion) ---
 
 #============================================================================
-# THEOREM DNS1-inv-instantiated:
-#    (A -> B) -> B, D |- B
-#    ---------------------  (invertibility of DNS.1)
-#         A, D |- B
-#
-# Structural induction on the witness (by-induction), generalized over
-# BOTH orderings of the doubleton context (the Hgen disjunction) to
-# absorb the Exchange case -- the exact analogue of Coq's Hgen. The
-# local method both-orders factors the duplicated case analysis.
+# THEOREM claim1-holds-in-F-M (Coq: claim1_holds_in_F_M): Claim 1 holds
+# of F_M -- the premiss of the DNS.1 instance is underivable there,
+# unconditionally, for distinct atoms.
 #============================================================================
 
-define DNS1-inv-instantiated :=
-  (forall ?a:Ide ?b:Ide .
-    (derivable minimal-F
-               ((Impl (Impl (Var ?a) (Var ?b)) (Var ?b))
-                 :: ((Neg (Var ?a)) :: nil))
+define claim1-holds-in-F-M :=
+  (forall ?a:Atom ?b:Atom .
+    ?a =/= ?b ==>
+    (derivable minimal-F (claim1-ctx (Var ?a)) (some-succ (Var ?b)))
+    ==> false)
+
+conclude claim1-holds-in-F-M
+  pick-any a:Atom b:Atom
+    assume hab := (a =/= b)
+      let { va := (Var a); vb := (Var b); na := (Neg va);
+            iab := (Impl va vb); dns := (Impl iab vb);
+            ctx1 := (claim1-ctx va) }
+      assume HD := (derivable minimal-F ctx1 (some-succ vb))
+        let { ex := (!un-derivable! minimal-F ctx1 (some-succ vb)) }
+          pick-witness d for ex
+            let { hinv := (!inv-ctx! va va na dns);
+                  conj := (!mp (!mp (!uspec*
+                            (!uspec (!mp (!uspec* DNS1-inversion-lemma [a b])
+                                         hab)
+                                    d)
+                            [minimal-F ctx1 (some-succ vb)])
+                            (!claim (well-formed d minimal-F ctx1
+                                                 (some-succ vb))))
+                            (!reflex minimal-F));
+                  conj2 := (!mp conj hinv) }
+              (!absurd (!reflex (some-succ vb)) (!left-and conj2))
+
+#============================================================================
+# THEOREM DNS1-conclusion-underivable-in-F-M
+# (Coq: DNS1_conclusion_underivable_in_F_M): the conclusion of the
+# DNS.1 instance is underivable in F_M as well.
+#============================================================================
+
+define DNS1-conclusion-underivable-in-F-M :=
+  (forall ?a:Atom ?b:Atom .
+    ?a =/= ?b ==>
+    (derivable minimal-F (dns1-ctx (Var ?a) (Var ?b))
+               (some-succ (Var ?b)))
+    ==> false)
+
+conclude DNS1-conclusion-underivable-in-F-M
+  pick-any a:Atom b:Atom
+    assume hab := (a =/= b)
+      let { va := (Var a); vb := (Var b); na := (Neg va);
+            iab := (Impl va vb); dns := (Impl iab vb);
+            ctx2 := (dns1-ctx va vb) }
+      assume HD := (derivable minimal-F ctx2 (some-succ vb))
+        let { ex := (!un-derivable! minimal-F ctx2 (some-succ vb)) }
+          pick-witness d for ex
+            let { hinv := (!inv-ctx! dns va na dns);
+                  conj := (!mp (!mp (!mp (!uspec*
+                            (!uspec (!mp (!uspec* DNS1-inversion-lemma [a b])
+                                         hab)
+                                    d)
+                            [minimal-F ctx2 (some-succ vb)])
+                            (!claim (well-formed d minimal-F ctx2
+                                                 (some-succ vb))))
+                            (!reflex minimal-F))
+                            hinv) }
+              (!absurd (!reflex (some-succ vb)) (!left-and conj))
+
+#============================================================================
+# THEOREM DNS1-invertible-at-decisive-instance-in-F-M
+# (Coq: DNS1_invertible_at_decisive_instance_in_F_M): the invertibility
+# of DNS.1 at the decisive instance is a metatheorem of F_M. The
+# antecedent is refuted by the underivability of the conclusion; the
+# final step concludes from false -- the empty case analysis, not an
+# ex falso axiom: the object calculus has no absurdity and no such rule.
+#============================================================================
+
+define DNS1-invertible-at-decisive-instance-in-F-M :=
+  (forall ?a:Atom ?b:Atom .
+    ?a =/= ?b ==>
+    (derivable minimal-F (dns1-ctx (Var ?a) (Var ?b))
                (some-succ (Var ?b)))
     ==>
-    (derivable minimal-F
-               ((Var ?a) :: ((Neg (Var ?a)) :: nil))
-               (some-succ (Var ?b))))
+    (derivable minimal-F (claim1-ctx (Var ?a)) (some-succ (Var ?b))))
 
-conclude DNS1-inv-instantiated
-  pick-any a:Ide b:Ide
-    let { va := (Var a); vb := (Var b); na := (Neg va);
-          phi := (Impl (Impl va vb) vb);            # (A -> B) -> B
-          ord1 := (phi :: (na :: nil));
-          ord2 := (na :: (phi :: nil));
-          sb := (some-succ vb);
-          target := (derivable minimal-F (va :: (na :: nil)) sb);
-          # Inequalities used by refute-mem in the Ax case, established
-          # once and for all: vb =/= phi and vb =/= na.
-          _ := (!instance var-neq-impl [b (Impl va vb) vb]);
-          _ := (!instance var-neq-neg [b va]);
-          # both-orders: given the constructor term D and a kill method
-          # (w, ord) |-> target, proves the disjunctive implication
-          # required by the induction branch.
-          both-orders :=
-            method (D kill)
-              let { wf1 := (well-formed D minimal-F ord1 sb);
-                    wf2 := (well-formed D minimal-F ord2 sb) }
-                assume disj := (wf1 | wf2)
-                  (!cases disj
-                    (assume w1 := wf1 (!kill w1 ord1))
-                    (assume w2 := wf2 (!kill w2 ord2)));
-          Hgen :=
-            (forall ?dd:Deriv .
-              ((well-formed ?dd minimal-F ord1 sb)
-               | (well-formed ?dd minimal-F ord2 sb))
-              ==> target);
-          Hgen-proof :=
-            by-induction Hgen {
-                (ax-rule f0 G0 phi0) =>
-                  # Var b belongs to neither ordering.
-                  (!both-orders (ax-rule f0 G0 phi0)
-                    method (w ord)
-                      let { _ := (!wf-elim w wf-ax
-                                   [phi0 G0 sb f0 ord minimal-F]);
-                            phi0-eq := (!chain->
-                                         [(sb = some-succ phi0)
-                                           ==> (vb = phi0)
-                                               [(datatype-axioms "Succedent")]]);
-                            _ := (!chain->
-                                   [(mem phi0 G0)
-                                     ==> (mem vb ord)
-                                         [phi0-eq (G0 = ord)]]);
-                            _ := (!refute-mem vb ord) }
-                        (!from-false target))
-              | (l-neg-rule f0 G0 A0 d0) =>
-                  # Succedent none-succ vs some-succ (Var b).
-                  (!both-orders (l-neg-rule f0 G0 A0 d0)
-                    method (w ord)
-                      let { _ := (!wf-elim w wf-l-neg
-                                   [A0 G0 sb d0 f0 ord minimal-F]);
-                            _ := (!absurd (sb = none-succ)
-                                   (!sym (!instance none-neq-some [vb]))) }
-                        (!from-false target))
-              | (r-arrow-rule f0 G0 A0 B0 d0) =>
-                  # Succedent Impl vs Var b: no-confusion.
-                  (!both-orders (r-arrow-rule f0 G0 A0 B0 d0)
-                    method (w ord)
-                      let { _ := (!wf-elim w wf-r-arrow
-                                   [A0 B0 G0 sb d0 f0 ord minimal-F]);
-                            vimpl-eq := (!chain->
-                                          [(sb = some-succ (Impl A0 B0))
-                                            ==> (vb = (Impl A0 B0))
-                                                [(datatype-axioms "Succedent")]]);
-                            _ := (!absurd vimpl-eq
-                                   (!instance var-neq-impl [b A0 B0])) }
-                        (!from-false target))
-              | (l-arrow-rule f0 G0 A0 B0 sc0 d1 d2) =>
-                  # ord1: head (A->B)->B = Impl A0 B0, PRODUCTIVE case:
-                  #   the left premise is [Neg A] |- A->B, and
-                  #   R-arrow-inv-NegA-min concludes. (Coq: apply
-                  #   R_arrow_inv_NegA_min.)
-                  # ord2: head Neg A vs Impl A0 B0, impossible.
-                  (!both-orders (l-arrow-rule f0 G0 A0 B0 sc0 d1 d2)
-                    method (w ord)
-                      let { _ := (!wf-elim w wf-l-arrow
-                                   [A0 B0 G0 f0 ord sb sc0 d1 d2
-                                    minimal-F]) }
-                        check {
-                          (ord equal? ord1) =>
-                            let { head-eq := (!chain->
-                                               [(ord1 = ((Impl A0 B0) :: G0))
-                                                 ==> (phi = (Impl A0 B0))
-                                                     [(datatype-axioms "List")]]);
-                                  tail-eq := (!chain->
-                                               [(ord1 = ((Impl A0 B0) :: G0))
-                                                 ==> ((na :: nil) = G0)
-                                                     [(datatype-axioms "List")]]);
-                                  A0-eq := (!chain->
-                                             [head-eq
-                                               ==> ((Impl va vb) = A0)
-                                                   [(datatype-axioms "Formula")]]);
-                                  _ := (!chain->
-                                         [(well-formed d1 f0 G0 (some-succ A0))
-                                           ==> (well-formed d1 minimal-F
-                                                  (na :: nil)
-                                                  (some-succ (Impl va vb)))
-                                               [(f0 = minimal-F)
-                                                tail-eq A0-eq]]);
-                                  dleft := (!derivable! minimal-F (na :: nil)
-                                              (some-succ (Impl va vb)) d1) }
-                              (!mp (!uspec (!uspec R-arrow-inv-NegA-min a) b)
-                                   dleft)
-                        | else =>
-                            let { head-eq := (!chain->
-                                               [(ord2 = ((Impl A0 B0) :: G0))
-                                                 ==> (na = (Impl A0 B0))
-                                                     [(datatype-axioms "List")]]);
-                                  _ := (!absurd head-eq
-                                         (!instance neg-neq-impl
-                                           [va A0 B0])) }
-                              (!from-false target)
-                        })
-              | (exchange-rule f0 xf0 yf0 sc0 d0) =>
-                  # Productive in both orderings: the premise lives on
-                  # the PERMUTED ordering, which the induction
-                  # hypothesis covers via the disjunction. h/t =
-                  # head/tail of ord; the premise context [xf0,yf0] is
-                  # the other ordering.
-                  let { ih := (((well-formed d0 minimal-F ord1 sb)
-                                | (well-formed d0 minimal-F ord2 sb))
-                               ==> target) }
-                    (!both-orders (exchange-rule f0 xf0 yf0 sc0 d0)
-                      method (w ord)
-                        let { other := check {(ord equal? ord1) => ord2
-                                             | else => ord1};
-                              h := check {(ord equal? ord1) => phi
-                                         | else => na};
-                              t := check {(ord equal? ord1) => na
-                                         | else => phi};
-                              _ := (!wf-elim w wf-exchange
-                                     [d0 f0 xf0 yf0 ord sb sc0 minimal-F]);
-                              yf0-eq := (!chain->
-                                          [(ord = (yf0 :: (xf0 :: nil)))
-                                            ==> (h = yf0)
-                                                [(datatype-axioms "List")]]);
-                              tail-c := (!chain->
-                                          [(ord = (yf0 :: (xf0 :: nil)))
-                                            ==> ((t :: nil) = (xf0 :: nil))
-                                                [(datatype-axioms "List")]]);
-                              xf0-eq := (!chain->
-                                          [tail-c
-                                            ==> (t = xf0)
-                                                [(datatype-axioms "List")]]);
-                              prem-rw := (!chain->
-                                           [(well-formed d0 f0
-                                              (xf0 :: (yf0 :: nil)) sc0)
-                                             ==> (well-formed d0 minimal-F
-                                                    other sb)
-                                                 [(f0 = minimal-F) (sc0 = sb)
-                                                  xf0-eq yf0-eq]]);
-                              disj-ih :=
-                                check {(ord equal? ord1) =>
-                                         (!right-either
-                                           (well-formed d0 minimal-F ord1 sb)
-                                           prem-rw)
-                                      | else =>
-                                         (!left-either
-                                           prem-rw
-                                           (well-formed d0 minimal-F ord2 sb))} }
-                          (!mp ih disj-ih))
-              | (r-arrow-core-rule G0 A0 B0 d0) =>
-                  # Fragment core-logic vs minimal-F.
-                  (!both-orders (r-arrow-core-rule G0 A0 B0 d0)
-                    method (w ord)
-                      let { _ := (!wf-elim w wf-r-arrow-core
-                                   [A0 B0 G0 sb d0 ord minimal-F]);
-                            _ := (!absurd (minimal-F = core-logic)
-                                   (head (datatype-axioms "Fragment"))) }
-                        (!from-false target))
-            }
-        }
-      # From the hypothesis (ordering 1), extract the witness and feed
-      # Hgen through the left disjunct.
-      assume hyp := (derivable minimal-F ord1 sb)
-        let { ex-d := (!chain->
-                        [hyp
-                          ==> (exists ?d:Deriv .
-                                 (well-formed ?d minimal-F ord1 sb))
-                              [derivable-def]]) }
-          pick-witness w for ex-d wf-w
-            (!mp (!uspec Hgen-proof w)
-                 (!left-either wf-w (well-formed w minimal-F ord2 sb)))
-
-#============================================================================
-# THEOREM DNS1-anti-instantiated: contrapositive of DNS1-inv.
-#         A, D |/- B
-#    ---------------------
-#    (A -> B) -> B, D |/- B
-#============================================================================
-
-define DNS1-anti-instantiated :=
-  (forall ?a:Ide ?b:Ide .
-    ((derivable minimal-F
-                ((Var ?a) :: ((Neg (Var ?a)) :: nil))
-                (some-succ (Var ?b))) ==> false)
-    ==>
-    ((derivable minimal-F
-                ((Impl (Impl (Var ?a) (Var ?b)) (Var ?b))
-                  :: ((Neg (Var ?a)) :: nil))
-                (some-succ (Var ?b))) ==> false))
-
-conclude DNS1-anti-instantiated
-  pick-any a:Ide b:Ide
-    assume H1 := ((derivable minimal-F
-                             ((Var a) :: ((Neg (Var a)) :: nil))
-                             (some-succ (Var b))) ==> false)
-      assume H2 := (derivable minimal-F
-                              ((Impl (Impl (Var a) (Var b)) (Var b))
-                                :: ((Neg (Var a)) :: nil))
+conclude DNS1-invertible-at-decisive-instance-in-F-M
+  pick-any a:Atom b:Atom
+    assume hab := (a =/= b)
+      assume HD := (derivable minimal-F (dns1-ctx (Var a) (Var b))
                               (some-succ (Var b)))
-        (!mp H1 (!mp (!uspec (!uspec DNS1-inv-instantiated a) b) H2))
+        let { _ := (!mp (!mp (!uspec* DNS1-conclusion-underivable-in-F-M
+                                      [a b])
+                             hab)
+                        HD) }
+          (!from-false (derivable minimal-F (claim1-ctx (Var a))
+                                  (some-succ (Var b))))
 
 #============================================================================
-# AXIOMS (the only two of the development, as in Coq)
+# THEOREM anti-DNS1-holds-in-F-M (Coq: anti_DNS1_holds_in_F_M):
+# anti-DNS.1 holds in F_M as the CONTRAPOSITIVE of the certified
+# invertibility -- Goranko's correctness discipline for refutation
+# calculi: a refutation rule is licensed by the correctness of its
+# converse.
 #============================================================================
 
-# Claim1-Tennant: Tennant's antisequent Neg A, A |/- B
-# (Core Logic, p. 156).
-
-assert Claim1-Tennant :=
-  (forall ?a:Ide ?b:Ide .
-    (derivable core-logic
-               ((Var ?a) :: ((Neg (Var ?a)) :: nil))
-               (some-succ (Var ?b))) ==> false)
-
-# min-antisequent-rule-to-core: any antisequent rule established by
-# induction on the rules of F shared by M and C transfers from
-# minimal-F to core-logic.
-
-assert min-antisequent-rule-to-core :=
-  (forall ?G:(List Formula) ?G2:(List Formula)
-          ?C:Succedent ?C2:Succedent .
-    (((derivable minimal-F ?G ?C) ==> false)
-     ==> ((derivable minimal-F ?G2 ?C2) ==> false))
+define anti-DNS1-holds-in-F-M :=
+  (forall ?a:Atom ?b:Atom .
+    ?a =/= ?b ==>
+    ((derivable minimal-F (claim1-ctx (Var ?a)) (some-succ (Var ?b)))
+     ==> false)
     ==>
-    (((derivable core-logic ?G ?C) ==> false)
-     ==> ((derivable core-logic ?G2 ?C2) ==> false)))
+    ((derivable minimal-F (dns1-ctx (Var ?a) (Var ?b))
+                (some-succ (Var ?b)))
+     ==> false))
+
+conclude anti-DNS1-holds-in-F-M
+  pick-any a:Atom b:Atom
+    assume hab := (a =/= b)
+      assume hprem := ((derivable minimal-F (claim1-ctx (Var a))
+                                  (some-succ (Var b))) ==> false)
+        assume HD := (derivable minimal-F (dns1-ctx (Var a) (Var b))
+                                (some-succ (Var b)))
+          (!mp hprem
+               (!mp (!mp (!uspec*
+                       DNS1-invertible-at-decisive-instance-in-F-M [a b])
+                       hab)
+                    HD))
+
+# == Block D -- Step 3: the refutation rule anti-DNS.1 and the
+#    refutation system ==
+#
+# In the sense of Lukasiewicz, Tiomkin (1988) and Goranko (Studia
+# Logica 53, 1994): a deductive system for NON-provability, made of
+# rejection axioms and refutation rules. Below, the smallest refutation
+# system that the kernel licenses: Claim 1 as its only rejection axiom,
+# anti-DNS.1 as its only refutation rule -- the converse of the latter
+# being the certified DNS1-invertible-at-decisive-instance-in-F-M.
+# Refutation derivations are reified exactly as derivations are:
+# datatype Refut + refut-wf + refutable.
+
+datatype Refut :=
+    (claim1-axiom Atom Atom)
+  | (anti-DNS1 Atom Atom Refut)
+
+assert (datatype-axioms "Refut")
+
+define [rr rr'] := [?rr:Refut ?rr':Refut]
+
+declare refut-wf : [Refut (List Formula) Succedent] -> Boolean
+
+assert* rwf-claim1 :=
+  [((refut-wf (claim1-axiom a b) G S)
+      <==>
+    (a =/= b
+     & G = (claim1-ctx (Var a))
+     & S = (some-succ (Var b))))]
+
+assert* rwf-anti :=
+  [((refut-wf (anti-DNS1 a b rr) G S)
+      <==>
+    (G = (dns1-ctx (Var a) (Var b))
+     & S = (some-succ (Var b))
+     & (refut-wf rr (claim1-ctx (Var a)) (some-succ (Var b)))))]
+
+declare refutable : [(List Formula) Succedent] -> Boolean
+
+assert* refutable-def :=
+  [((refutable G S) <==> (exists ?rr:Refut . (refut-wf ?rr G S)))]
+
+# List injectivity, needed to invert context equalities.
+
+define list-axioms := (datatype-axioms "List")
+define cons-inj    := (head (tail list-axioms))
+
+# Introduction methods for the two refutation constructors.
+
+define claim1-ax! :=
+  method (x y)
+    let { rhs := (x =/= y
+                  & (claim1-ctx (Var x)) = (claim1-ctx (Var x))
+                  & (some-succ (Var y)) = (some-succ (Var y)));
+          _ := (!prove-trivia rhs) }
+      (!chain<-
+        [(refut-wf (claim1-axiom x y)
+                   (claim1-ctx (Var x)) (some-succ (Var y)))
+          <== rhs                                          [rwf-claim1]])
+
+define anti! :=
+  method (x y rprem)
+    let { rhs := ((dns1-ctx (Var x) (Var y)) = (dns1-ctx (Var x) (Var y))
+                  & (some-succ (Var y)) = (some-succ (Var y))
+                  & (refut-wf rprem (claim1-ctx (Var x))
+                              (some-succ (Var y))));
+          _ := (!prove-trivia rhs) }
+      (!chain<-
+        [(refut-wf (anti-DNS1 x y rprem)
+                   (dns1-ctx (Var x) (Var y)) (some-succ (Var y)))
+          <== rhs                                          [rwf-anti]])
+
+define refutable! :=
+  method (Gamma S rtree)
+    let { _ := (!egen (exists ?zz:Refut . (refut-wf ?zz Gamma S)) rtree) }
+      (!chain<-
+        [(refutable Gamma S)
+          <== (exists ?zz:Refut . (refut-wf ?zz Gamma S))
+                                                         [refutable-def]])
 
 #============================================================================
-# THEOREM claim1-false: the final contradiction (paper Section 2.5).
-#   (1) DNS.1-anti (minimal-F), lifted to core-logic by the transfer.
-#   (2) Applied to Claim1-Tennant: the fatal antisequent.
-#   (3) DNS.2 on absurdity-core: the corresponding sequent.
-#   (4) (2) and (3) contradict: false.
+# LEMMA refut-inversion (Coq: the inversion performed by [cases hprem]
+# inside refutation_system_L_correct_for_F_M): any refutation of the
+# Claim 1 sequent carries distinct atoms -- its last step can only be
+# the rejection axiom, whose side condition is exactly a =/= b.
+# Case analysis on the last refutation step; no induction is needed.
+#============================================================================
+
+define refut-inversion :=
+  (forall ?rr:Refut .
+    (forall ?a:Atom ?b:Atom .
+      (refut-wf ?rr (claim1-ctx (Var ?a)) (some-succ (Var ?b)))
+      ==> ?a =/= ?b))
+
+datatype-cases refut-inversion {
+
+  (claim1-axiom a0 b0) =>
+    pick-any x:Atom y:Atom
+      assume w := (refut-wf (claim1-axiom a0 b0)
+                            (claim1-ctx (Var x)) (some-succ (Var y)))
+        let { _ := (!mp (!left-iff (!uspec* (head rwf-claim1)
+                          [(claim1-ctx (Var x))
+                           (some-succ (Var y)) a0 b0]))
+                        w);
+              xa := (!chain->
+                      [((claim1-ctx (Var x)) = (claim1-ctx (Var a0)))
+                       ==> ((Var x) = (Var a0)
+                            & ((Neg (Var x)) :: nil)
+                              = ((Neg (Var a0)) :: nil))   [cons-inj]
+                       ==> (x = a0)                        [left-and var-inj]]);
+              yb := (!chain->
+                      [((some-succ (Var y)) = (some-succ (Var b0)))
+                       ==> ((Var y) = (Var b0))            [some-inj]
+                       ==> (y = b0)                        [var-inj]]) }
+          (!by-contradiction (x =/= y)
+            (assume h := (x = y)
+              (!absurd (!chain [a0 = x    [xa]
+                                   = y    [h]
+                                   = b0   [yb]])
+                       (!claim (a0 =/= b0)))))
+
+| (anti-DNS1 a0 b0 r0) =>
+    pick-any x:Atom y:Atom
+      assume w := (refut-wf (anti-DNS1 a0 b0 r0)
+                            (claim1-ctx (Var x)) (some-succ (Var y)))
+        let { _ := (!mp (!left-iff (!uspec* (head rwf-anti)
+                          [(claim1-ctx (Var x))
+                           (some-succ (Var y)) a0 b0 r0]))
+                        w);
+              e := (!chain->
+                     [((claim1-ctx (Var x))
+                        = (dns1-ctx (Var a0) (Var b0)))
+                      ==> ((Var x) = (Impl (Impl (Var a0) (Var b0))
+                                           (Var b0))
+                           & ((Neg (Var x)) :: nil)
+                             = ((Neg (Var a0)) :: nil))    [cons-inj]]);
+              _ := (!absurd (!left-and e)
+                            (!neq-formulas!
+                              (Var x)
+                              (Impl (Impl (Var a0) (Var b0)) (Var b0)))) }
+          (!from-false (x =/= y))
+}
+
+#============================================================================
+# THEOREM refutation-system-L-correct-for-F-M
+# (Coq: refutation_system_L_correct_for_F_M): everything the refutation
+# system rejects is underivable in the minimal reading. Induction on
+# the refutation derivation; both cases discharge through the
+# inversion lemma.
+#============================================================================
+
+# Auxiliary form, quantified over reified refutation derivations --
+# the Athena counterpart of Coq's [induction HR].
+
+define L-correct-aux :=
+  (forall ?rr:Refut .
+    (forall ?G:(List Formula) ?S:Succedent .
+      (refut-wf ?rr ?G ?S) ==>
+      (derivable minimal-F ?G ?S) ==> false))
+
+by-induction L-correct-aux {
+
+  (claim1-axiom a0 b0) =>
+    pick-any Gq:(List Formula) Sq:Succedent
+      assume w := (refut-wf (claim1-axiom a0 b0) Gq Sq)
+        let { _ := (!mp (!left-iff (!uspec* (head rwf-claim1)
+                          [Gq Sq a0 b0]))
+                        w) }
+        assume hD := (derivable minimal-F Gq Sq)
+          (!mp (!mp (!uspec* claim1-holds-in-F-M [a0 b0])
+                    (!claim (a0 =/= b0)))
+               (!chain->
+                 [hD ==> (derivable minimal-F
+                                    (claim1-ctx (Var a0))
+                                    (some-succ (Var b0)))
+                     [(Gq = (claim1-ctx (Var a0)))
+                      (Sq = (some-succ (Var b0)))]]))
+
+| (anti-DNS1 a0 b0 r0) =>
+    pick-any Gq:(List Formula) Sq:Succedent
+      assume w := (refut-wf (anti-DNS1 a0 b0 r0) Gq Sq)
+        let { _ := (!mp (!left-iff (!uspec* (head rwf-anti)
+                          [Gq Sq a0 b0 r0]))
+                        w);
+              hab := (!mp (!uspec* refut-inversion [r0 a0 b0])
+                          (!claim (refut-wf r0
+                                    (claim1-ctx (Var a0))
+                                    (some-succ (Var b0))))) }
+        assume hD := (derivable minimal-F Gq Sq)
+          (!mp (!mp (!uspec* DNS1-conclusion-underivable-in-F-M [a0 b0])
+                    hab)
+               (!chain->
+                 [hD ==> (derivable minimal-F
+                                    (dns1-ctx (Var a0) (Var b0))
+                                    (some-succ (Var b0)))
+                     [(Gq = (dns1-ctx (Var a0) (Var b0)))
+                      (Sq = (some-succ (Var b0)))]]))
+}
+
+define refutation-system-L-correct-for-F-M :=
+  (forall ?G:(List Formula) ?S:Succedent .
+    (refutable ?G ?S) ==>
+    (derivable minimal-F ?G ?S) ==> false)
+
+conclude refutation-system-L-correct-for-F-M
+  pick-any Gq:(List Formula) Sq:Succedent
+    assume hR := (refutable Gq Sq)
+      let { ex := (!chain->
+              [hR ==> (exists ?rr:Refut . (refut-wf ?rr Gq Sq))
+                                                       [refutable-def]]) }
+        pick-witness r0 for ex
+          assume hD := (derivable minimal-F Gq Sq)
+            (!mp (!mp (!uspec* L-correct-aux [r0 Gq Sq])
+                      (!claim (refut-wf r0 Gq Sq)))
+                 hD)
+
+# == Block E -- Step 4: the same refutation system is INCORRECT for the
+#    Core reading -- and Claim 1 is false ==
+
+#============================================================================
+# THEOREM refutation-system-L-incorrect-for-F-C
+# (Coq: refutation_system_L_incorrect_for_F_C): there is a sequent that
+# the refutation system rejects and that F_C nevertheless derives --
+# the decisive DNS.1 instance at the atoms 0 and 1.
+#============================================================================
+
+define one := (succ zero)
+
+define refutation-system-L-incorrect-for-F-C :=
+  (exists ?G:(List Formula) ?S:Succedent .
+    (refutable ?G ?S) & (derivable core-logic ?G ?S))
+
+conclude refutation-system-L-incorrect-for-F-C
+  let { h01 := (!uspec zero-neq-succ zero);
+        ctx2 := (dns1-ctx (Var zero) (Var one));
+        sb := (some-succ (Var one));
+        _ := (!claim1-ax! zero one);
+        _ := (!anti! zero one (claim1-axiom zero one));
+        hrefut := (!refutable! ctx2 sb (anti-DNS1 zero one
+                                        (claim1-axiom zero one)));
+        hderiv := (!mp (!uspec* DNS2-instantiated [zero one])
+                       (!uspec absurdity-core zero));
+        _ := (!both hrefut hderiv);
+        inner := (!egen (exists ?S:Succedent .
+                          (refutable ctx2 ?S)
+                          & (derivable core-logic ctx2 ?S))
+                        sb) }
+    (!egen (exists ?G:(List Formula) ?S:Succedent .
+             (refutable ?G ?S) & (derivable core-logic ?G ?S))
+           ctx2)
+
+#============================================================================
+# The two commitments of Core Logic, stated as HYPOTHESES -- nothing is
+# asserted: they occur only as antecedents of the two theorems below.
+#
+#   Claim1-Tennant-hyp:      Tennant's Claim 1 for F_C -- the premiss
+#                            sequent of the DNS.1 instance is
+#                            underivable in Core Logic.
+#   anti-DNS1-rule-for-C-hyp: the refutation rule anti-DNS.1 read as
+#                            correct for F_C -- the rule Tennant's
+#                            paraconsistency argument needs, dormant in
+#                            the shadow of the system.
+#============================================================================
+
+define Claim1-Tennant-hyp :=
+  (forall ?a:Atom ?b:Atom .
+    ?a =/= ?b ==>
+    (derivable core-logic (claim1-ctx (Var ?a)) (some-succ (Var ?b)))
+    ==> false)
+
+define anti-DNS1-rule-for-C-hyp :=
+  (forall ?a:Atom ?b:Atom .
+    ?a =/= ?b ==>
+    ((derivable core-logic (claim1-ctx (Var ?a)) (some-succ (Var ?b)))
+     ==> false)
+    ==>
+    ((derivable core-logic (dns1-ctx (Var ?a) (Var ?b))
+                (some-succ (Var ?b)))
+     ==> false))
+
+#============================================================================
+# THEOREM claim1-false (Coq: claim1_false): jointly, the two
+# commitments refute themselves at every pair of distinct atoms.
+# The derivation DNS2-instantiated (absurdity-core) witnesses the
+# consequent that anti-DNS.1 forbids.
 #============================================================================
 
 define claim1-false :=
-  (forall ?a:Ide ?b:Ide . false)
+  (Claim1-Tennant-hyp ==>
+    (anti-DNS1-rule-for-C-hyp ==>
+      (forall ?a:Atom ?b:Atom . ?a =/= ?b ==> false)))
 
 conclude claim1-false
-  pick-any a:Ide b:Ide
-    let { dns1-anti-ab := (!uspec (!uspec DNS1-anti-instantiated a) b);
-          transfer-inst :=
-            (!uspec* min-antisequent-rule-to-core
-              [((Var a) :: ((Neg (Var a)) :: nil))
-               ((Impl (Impl (Var a) (Var b)) (Var b))
-                 :: ((Neg (Var a)) :: nil))
-               (some-succ (Var b))
-               (some-succ (Var b))]);
-          Hanti-core := (!mp transfer-inst dns1-anti-ab);
-          fatal-anti := (!mp Hanti-core
-                             (!uspec (!uspec Claim1-Tennant a) b));
-          seq-deriv := (!mp (!uspec (!uspec DNS2-instantiated a) b)
-                            (!uspec absurdity-core a)) }
-      (!mp fatal-anti seq-deriv)
+  assume h1 := Claim1-Tennant-hyp
+    assume h2 := anti-DNS1-rule-for-C-hyp
+      pick-any a:Atom b:Atom
+        assume hab := (a =/= b)
+          (!mp (!mp (!mp (!uspec* h2 [a b]) hab)
+                    (!mp (!uspec* h1 [a b]) hab))
+               (!mp (!uspec* DNS2-instantiated [a b])
+                    (!uspec absurdity-core a)))
+
+#============================================================================
+# THEOREM claim1-false-at-zero-one (Coq: claim1_false_at_0_1): the
+# contradiction closed at the concrete atoms 0 and 1 -- no hypothesis
+# remains other than the two commitments themselves.
+#============================================================================
+
+define claim1-false-at-zero-one :=
+  (Claim1-Tennant-hyp ==> (anti-DNS1-rule-for-C-hyp ==> false))
+
+conclude claim1-false-at-zero-one
+  assume h1 := Claim1-Tennant-hyp
+    assume h2 := anti-DNS1-rule-for-C-hyp
+      (!mp (!uspec* (!mp (!mp claim1-false h1) h2) [zero one])
+           (!uspec zero-neq-succ zero))
+
+# == Block F -- Step 5: Tennant is right about Claim 1 for F_C -- and
+#    that is exactly why anti-DNS.1 is L-incorrect for F_C ==
+
+# succ-impl-kill!: derives false from (sb = (some-succ (Impl A0 B0)))
+# when sb = (some-succ vb) with vb atomic -- the common death of the
+# r-arrow-rule and r-arrow-core-rule cases below.
+
+define succ-impl-kill! :=
+  method (sb vb A0 B0)
+    (!absurd (!chain-> [(sb = (some-succ (Impl A0 B0)))
+                        ==> (vb = (Impl A0 B0))          [some-inj]])
+             (!neq-formulas! vb (Impl A0 B0)))
+
+#============================================================================
+# THEOREM claim1-holds-in-F-C (Coq: claim1_holds_in_F_C): Claim 1 is
+# TRUE of Core Logic -- the premiss sequent A, not-A => B has no
+# F_C-derivation. Case analysis on the last rule: no rule of F_C can
+# conclude it. No induction is needed: every case dies on its
+# side conditions.
+#============================================================================
+
+define claim1-holds-in-F-C :=
+  (forall ?a:Atom ?b:Atom .
+    ?a =/= ?b ==>
+    (derivable core-logic (claim1-ctx (Var ?a)) (some-succ (Var ?b)))
+    ==> false)
+
+conclude claim1-holds-in-F-C
+  pick-any a:Atom b:Atom
+    assume hab := (a =/= b)
+      let { va := (Var a); vb := (Var b); na := (Neg va);
+            ctx1 := (claim1-ctx va); sb := (some-succ vb);
+            aux :=
+              conclude (forall ?d:Deriv .
+                         (well-formed ?d core-logic ctx1 sb) ==> false)
+                datatype-cases
+                  (forall ?d:Deriv .
+                    (well-formed ?d core-logic ctx1 sb) ==> false) {
+
+                  (ax-rule f0 G0 A0) =>
+                    assume w := (well-formed (ax-rule f0 G0 A0)
+                                             core-logic ctx1 sb)
+                      let { _ := (!wf-elim w wf-ax
+                                    [A0 G0 sb f0 ctx1 core-logic]);
+                            vbA := (!chain->
+                              [(sb = (some-succ A0))
+                               ==> (vb = A0)               [some-inj]]);
+                            memq := (!chain->
+                              [(mem A0 G0)
+                               ==> (mem A0 ctx1)           [(G0 = ctx1)]]) }
+                        (!mem2-cases! memq A0 va na false
+                           (method (e1)
+                             let { e := (!chain [vb = A0 [vbA]
+                                                    = va [e1]]);
+                                   ba := (!chain-> [e ==> (b = a)
+                                                          [var-inj]]) }
+                               (!absurd (!sym ba) hab))
+                           (method (e3)
+                             let { e := (!chain [vb = A0 [vbA]
+                                                    = na [e3]]) }
+                               (!absurd e (!neq-formulas! vb na))))
+
+                | (l-neg-rule f0 G0 A0 d0) =>
+                    assume w := (well-formed (l-neg-rule f0 G0 A0 d0)
+                                             core-logic ctx1 sb)
+                      let { _ := (!wf-elim w wf-l-neg
+                                    [A0 G0 sb d0 f0 ctx1 core-logic]) }
+                        (!absurd (!sym (!claim (sb = none-succ)))
+                                 (!uspec none-neq-some vb))
+
+                | (r-arrow-rule f0 G0 A0 B0 d0) =>
+                    assume w := (well-formed (r-arrow-rule f0 G0 A0 B0 d0)
+                                             core-logic ctx1 sb)
+                      let { _ := (!wf-elim w wf-r-arrow
+                                    [A0 B0 G0 sb d0 f0 ctx1 core-logic]) }
+                        (!succ-impl-kill! sb vb A0 B0)
+
+                | (l-arrow-rule f0 G0 A0 B0 Sc0 da db) =>
+                    assume w := (well-formed
+                                  (l-arrow-rule f0 G0 A0 B0 Sc0 da db)
+                                  core-logic ctx1 sb)
+                      let { _ := (!wf-elim w wf-l-arrow
+                                    [A0 B0 G0 f0 ctx1 sb Sc0 da db
+                                     core-logic]);
+                            memq := (!chain->
+                              [(mem (Impl A0 B0) G0)
+                               ==> (mem (Impl A0 B0) ctx1)
+                                                        [(G0 = ctx1)]]) }
+                        (!mem2-cases! memq (Impl A0 B0) va na false
+                           (method (e1)
+                             (!absurd e1
+                               (!neq-formulas! (Impl A0 B0) va)))
+                           (method (e3)
+                             (!absurd e3
+                               (!neq-formulas! (Impl A0 B0) na))))
+
+                | (r-arrow-core-rule G0 A0 B0 d0) =>
+                    assume w := (well-formed (r-arrow-core-rule G0 A0 B0 d0)
+                                             core-logic ctx1 sb)
+                      let { _ := (!wf-elim w wf-r-arrow-core
+                                    [A0 B0 G0 sb d0 ctx1 core-logic]) }
+                        (!succ-impl-kill! sb vb A0 B0)
+                } }
+      assume HD := (derivable core-logic ctx1 sb)
+        let { ex := (!un-derivable! core-logic ctx1 sb) }
+          pick-witness d0 for ex
+            (!mp (!uspec aux d0)
+                 (!claim (well-formed d0 core-logic ctx1 sb)))
+
+#============================================================================
+# THEOREM anti-DNS1-L-incorrect-for-F-C
+# (Coq: anti_DNS1_L_incorrect_for_F_C): precisely BECAUSE Claim 1 is
+# true of F_C, the refutation rule anti-DNS.1 is L-incorrect for F_C:
+# its premiss holds there while its conclusion fails there -- the
+# derivation of DNS.2 is the counterexample. Tennant cannot both keep
+# Claim 1 and use the rule his paraconsistency argument requires.
+#============================================================================
+
+define anti-DNS1-L-incorrect-for-F-C :=
+  (forall ?a:Atom ?b:Atom .
+    ?a =/= ?b ==>
+    ~ (((derivable core-logic (claim1-ctx (Var ?a))
+                   (some-succ (Var ?b))) ==> false)
+       ==>
+       ((derivable core-logic (dns1-ctx (Var ?a) (Var ?b))
+                   (some-succ (Var ?b))) ==> false)))
+
+conclude anti-DNS1-L-incorrect-for-F-C
+  pick-any a:Atom b:Atom
+    assume hab := (a =/= b)
+      (!by-contradiction
+        (~ (((derivable core-logic (claim1-ctx (Var a))
+                        (some-succ (Var b))) ==> false)
+            ==>
+            ((derivable core-logic (dns1-ctx (Var a) (Var b))
+                        (some-succ (Var b))) ==> false)))
+        (assume H := (((derivable core-logic (claim1-ctx (Var a))
+                                  (some-succ (Var b))) ==> false)
+                      ==>
+                      ((derivable core-logic (dns1-ctx (Var a) (Var b))
+                                  (some-succ (Var b))) ==> false))
+          (!mp (!mp H (!mp (!uspec* claim1-holds-in-F-C [a b]) hab))
+               (!mp (!uspec* DNS2-instantiated [a b])
+                    (!uspec absurdity-core a)))))
