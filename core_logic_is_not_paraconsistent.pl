@@ -218,14 +218,31 @@ lower_z(122). upper_z(90).
 % AXIOMS
 % ================================================================
 
+% Fragment F has a single initial-sequent (axiom) schema, in the
+% membership (extensional) form used throughout: a sequent Gamma |- A is
+% initial when the formula A belongs to the pool Gamma. This mirrors the
+% axiom of the three certifications -- Coq's
+% [In A G -> derivable f G (Some A)], Lean's
+% [A in G -> Derivable f G (some A)], Athena's [mem A G] -- read here
+% under the "contexts as available assumptions" convention. The two
+% guards keep proof search faithful and terminating: bot is the object
+% marker for the empty succedent, never an axiom; and an implication
+% A=>B is not accepted as an axiom by membership but derived (via R->
+% over L->), matching the paper's remark that the identity sequent on an
+% implication is derived, not initial (axioms being atomic).
+%
+% NOTE. A former second clause,
+%     ax(Gamma:B) :- iso_member(_:B, Gamma), B \= bot.
+% has been removed. It fired only when the context list literally held a
+% sequent-shaped term (_ : B) -- which the calculus never constructs,
+% since the rules insert formulas, not sequents. It was therefore dead
+% on every well-formed sequent and had no counterpart in Table 1 or in
+% the Coq / Lean / Athena rule sets. Removing it leaves every verdict
+% unchanged and makes the axiom set exactly the membership schema below.
 ax(Gamma:A) :-
     A \= (_=>_),
     A \= bot,
     iso_member(A, Gamma).
-
-ax(Gamma:B) :-
-    iso_member(_:B, Gamma),
-    B \= bot.
 
 
 % ================================================================
