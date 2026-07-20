@@ -2,7 +2,7 @@
 % core_logic_is_not_paraconsistent.pl
 %
 % Computational corroboration, in SWI-Prolog, of the results in the
-% paper under review:
+% paper:
 %
 %   "A Proof in Coq that Core Logic is not Paraconsistent"
 %
