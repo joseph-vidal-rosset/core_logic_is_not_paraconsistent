@@ -874,6 +874,7 @@ theorem :-
 
     write('-- Theorem 1: Claim 1 + DNS.1-anti vs. DNS.2 --'), nl,
     print_contradiction('Theorem 1',
+        'Claim 1',
         [~a,a]:b,
         [~a,(a=>b)=>b]:b,
         [~a,(a=>b)=>b]:b),
@@ -903,6 +904,7 @@ corollary :-
 
     write('-- Corollary 1: Claim 2 + DNS.1-anti vs. DNS.2 --'), nl,
     print_contradiction('Corollary 1',
+        'Claim 2',
         [~a,a]:(~b),
         [~a,(a=>(~b))=>(~b)]:(~b),
         [~a,(a=>(~b))=>(~b)]:(~b)),
@@ -1114,13 +1116,14 @@ formulas_latex([F|Rest], Latex) :-
     formulas_latex(Rest, LRest),
     concat_atoms([LF, ', ', LRest], Latex).
 
-rule_latex(ax,         '$Ax.$').
+rule_latex(ax,         '\\emph{Ax.}').
 rule_latex(lneg,       '$L\\lnot$').
 rule_latex(rcond,      '$R{\\to}$').
 rule_latex(rcond_core, '$R{\\to}_{\\mathbb{C}}$').
 rule_latex(lcond,      '$L{\\to}$').
 rule_latex(neg_e,      '$\\lnot E$').
 rule_latex(cut,        '$Cut$').
+rule_latex(dns2,       'DNS.2').
 
 % Write a line of LaTeX output
 wl(S) :- write(S), nl.
@@ -1172,19 +1175,33 @@ render_bussproofs(step(Rule, Seq, Subs)) :-
     ;             bp_nary(SL)
     ).
 
+% Contradiction square, rendered as in the paper:
+%   - left branch: Claim as a discharged leaf (empty AxiomC labelled by
+%     the Claim), then the anti-rule \overline{DNS.1};
+%   - right branch: the DNS.2 derived rule shown as a SINGLE step from
+%     the absurdity sequent ~A, A |- (the underlying Ax + L~ + L-> + R->_C
+%     expansion is displayed separately by dns_rules.);
+%   - final join to \bot is left unlabelled (as in the paper).
 render_bussproofs(neg_elim(
+        claim(ClaimLabel, _),
         dns1_anti(unprovable(ClaimSeq), unprovable(AntiConcSeq)),
         provable(_, Proof),
-        concl(Rule, Concl))) :-
+        concl(_Rule, Concl))) :-
     antiseq_latex(ClaimSeq,    CL),
     antiseq_latex(AntiConcSeq, AL),
-    rule_latex(Rule, RL),
     formula_latex(Concl, FL),
-    bp_axiom(CL),
+    % left branch
+    bp_axiom_empty,
+    concat_atoms(['\\RightLabel{\\scriptsize{(', ClaimLabel, ')}}'], ClaimLbl),
+    wl(ClaimLbl),
+    bp_unary(CL),
     wl('\\RightLabel{\\scriptsize{$\\overline{DNS.1}$}}'),
     bp_unary(AL),
+    % right branch: compressed DNS.2 derivation
     render_bussproofs(Proof),
-    bp_rightlabel(RL),
+    % final join to bottom: metatheoretic clash of a sequent and its
+    % refutation, deliberately UNLABELLED (this is not natural-deduction
+    % negation elimination).
     bp_binary(FL).
 
 
@@ -1207,12 +1224,14 @@ print_proof_term(step(Rule, Seq, Subs), Depth) :-
     indent(D1), write(']).'), nl.
 
 print_proof_term(neg_elim(
+        claim(ClaimLabel, _),
         dns1_anti(unprovable(ClaimSeq), unprovable(AntiConcSeq)),
         provable(DNS2Seq, Proof),
         concl(Rule, Concl)), Depth) :-
     indent(Depth), write('neg_elim('), nl,
     D1 is Depth + 1,
     D2 is D1 + 1,
+    indent(D1), write('claim('), write(ClaimLabel), write('),'), nl,
     indent(D1), write('dns1_anti('), nl,
     indent(D2), write('unprovable('), write(ClaimSeq),    write('),'), nl,
     indent(D2), write('unprovable('), write(AntiConcSeq), write(')'),  nl,
@@ -1255,23 +1274,32 @@ antiseq_latex(Gamma:F, Latex) :-
     formulas_latex(Clean, LeftLatex),
     formula_latex(F, RightLatex),
     ( LeftLatex = '' ->
-        concat_atoms(['\\not\\vdash ', RightLatex], Latex)
+        concat_atoms(['\\nvdash ', RightLatex], Latex)
     ;
-        concat_atoms([LeftLatex, ' \\not\\vdash ', RightLatex], Latex)
+        concat_atoms([LeftLatex, ' \\nvdash ', RightLatex], Latex)
     ).
 
-contradiction_term(ClaimSeq, AntiConcSeq, DNS2Seq,
+% The right branch is rendered as the paper does it: DNS.2 as a single
+% derived-rule step over the absurdity premiss ~A, A |- . That premiss
+% (Ax + L~) is still constructed by the engine, so the corroboration is
+% unchanged; only its DISPLAY is compressed. The derivability of the
+% DNS.2 conclusion in F is still checked (holds/1), and its full
+% expansion is available via dns_rules.
+contradiction_term(ClaimLabel, ClaimSeq, AntiConcSeq, DNS2Seq,
         neg_elim(
+            claim(ClaimLabel, ClaimSeq),
             dns1_anti(unprovable(ClaimSeq), unprovable(AntiConcSeq)),
-            provable(DNS2Seq, Proof),
+            provable(DNS2Seq, CompressedProof),
             concl(neg_e, bot))) :-
     \+ holds(ClaimSeq),
-    prove(DNS2Seq, Proof).
+    holds(DNS2Seq),
+    prove([a, ~a]:bot, PremissProof),
+    CompressedProof = step(dns2, DNS2Seq, [PremissProof]).
 
-print_contradiction(Title, ClaimSeq, AntiConcSeq, DNS2Seq) :-
+print_contradiction(Title, ClaimLabel, ClaimSeq, AntiConcSeq, DNS2Seq) :-
     nl,
     write('--- '), write(Title), write(' ---'), nl, nl,
-    ( contradiction_term(ClaimSeq, AntiConcSeq, DNS2Seq, Term) ->
+    ( contradiction_term(ClaimLabel, ClaimSeq, AntiConcSeq, DNS2Seq, Term) ->
         write('=== Prolog proof term ==='), nl,nl,
         print_proof_term(Term, 1),
         nl,
