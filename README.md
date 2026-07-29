@@ -1,8 +1,7 @@
 # Core Logic is not paraconsistent — Version 6
 
 Machine-checked companion to the paper *A Proof in Coq that Core Logic
-is not Paraconsistent* (arXiv:2606.05953, under review at the
-Australasian Journal of Logic). Refutation-system version.
+is not Paraconsistent* (arXiv:2606.05953). Refutation-system version.
 
 The argument, in one paragraph. DNS.1 is a derivable rule of the
 fragment ℱ under both of its readings, and it is *invertible* at the
