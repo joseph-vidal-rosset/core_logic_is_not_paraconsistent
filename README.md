@@ -165,21 +165,30 @@ can be what produces `claim1_false`.
 
 The structural objection answered above has a companion: that the
 treatment of negation is not Tennant's. It divides into two questions,
-and the first dissolves once three levels are kept apart.
+and the first dissolves once it is seen where the refutation rule
+comes from.
 
-**Where the contraposition lives.** anti-DNS.1 is obtained by
-contraposing the invertibility of DNS.1, and a reader may ask by which
-rule — since ℱ has no right-introduction rule for negation. By none:
-the contraposition does not take place in ℱ at all. Three levels are
-in play. The *object language* is ℱ: five rules, `Neg` primitive,
-no ⊥, absurdity carried by the empty succedent (`None`) as in
-Tennant's own sequents. The *refutation system* is the level of
-antisequents, `derivable f Γ C -> False`, in the sense of Łukasiewicz,
-Tiomkin (1988) and Goranko (1994); anti-DNS.1 is a rule of that
-system, not of ℂ. The contraposition is then a metalevel modus
-ponens, discharged in three tactics in `anti_DNS1_holds_in_ℱ_M`.
-Requiring it to pass through a rule of ℂ would be requiring a
-metatheorem to be derived inside the calculus it describes.
+**Nothing is imported into ℂ.** anti-DNS.1 is obtained by contraposing
+the invertibility of DNS.1, and a reader may ask by which rule — since
+ℱ has no right-introduction rule for negation. The question is
+misplaced, because the rule is never derived inside ℂ. Under the
+minimal reading it is *proved*: `anti_DNS1_holds_in_ℱ_M`, together
+with `refutation_system_Ł_correct_for_ℱ_M`, establishes the soundness
+of the refutation system for ℱ_𝐌 — and the contraposition performed
+there is ordinary reasoning about underivability, which is what
+Ł-correctness consists in. Under the Core reading it is *assumed*:
+`anti_DNS1_rule_for_ℂ` is an antecedent of `claim1_false`, beside
+Claim 1 itself. Nothing whatever is asserted of ℂ.
+
+That is the whole construction. The refutation rule is not an
+apparatus brought in from outside to judge Core Logic; it is Tennant's
+own, dormant in the shadow of his system — required by his
+paraconsistency argument, never stated by it. The Łukasiewicz
+vocabulary (Tiomkin 1988, Goranko 1994) adds nothing to ℂ: it names
+what that argument was already using. The theorem then reads: hold
+Claim 1, and hold the refutation rule its justification requires, and
+you hold a contradiction. No objection about negation can reach that,
+for the simple reason that negation is not what carries it.
 
 What follows is worth stating plainly, because it disposes of the
 objection rather than merely deflecting it: **negation does no work in
