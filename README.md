@@ -48,6 +48,15 @@ language, the derivations, and the refutation system). The two
 commitments of Core Logic occur exclusively as hypotheses — as
 antecedents of the final theorems.
 
+**Coq versions.** The three Coq files in this repository —
+`core_logic_is_not_paraconsistent.v`, `core_logic_F_multiplicative.v`
+and `negation_adequacy_standalone.v` — have been compiled under Coq
+8.18.0 and Coq 8.20.1, every `Print Assumptions` reporting `Closed
+under the global context` under both, with no deprecation warning
+under either. They depend on no external library, and no version is
+pinned here: unlike the Lean check below, replaying them does not
+require matching a toolchain.
+
 ## Coq (reference source)
 
 `core_logic_is_not_paraconsistent.v` — Version 6, 560 lines. Depends
@@ -94,7 +103,7 @@ monotonicity lemma whatsoever.
 
 | File | System | SHA256 |
 |---|---|---|
-| `core_logic_F_multiplicative.v` | Coq 8.18, `List` only | `14c0aeca079cbceca344be0623e6fa3a97fa7316619e2983f2a437c61908005b` |
+| `core_logic_F_multiplicative.v` | Coq, `List` only | `14c0aeca079cbceca344be0623e6fa3a97fa7316619e2983f2a437c61908005b` |
 | `core_logic_F_multiplicative.lean` | Lean 4, no import at all | `1922f494af6a1e7ad12d229d9d4a0055d8756378b70b4381ec23bace3e78fff3` |
 | `Challenge_multiplicative.lean` | Lean 4, fifteen statements left as `sorry` | `c59f827350ecc5bbff859d5b2d408608aa98fb5de2fff70cc6b60c17de01d9ee` |
 

@@ -1,1 +1,6 @@
 cover_letter.txt
+*.vo
+*.vok
+*.vos
+*.glob
+.*.aux
