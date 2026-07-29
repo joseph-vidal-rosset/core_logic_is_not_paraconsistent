@@ -61,6 +61,99 @@ report `Closed under the global context` (the two final theorems
 `claim1_false` and `claim1_false_at_0_1` are implications whose
 antecedents are the two commitments, so nothing is assumed).
 
+SHA256:
+`18fec76a8aaaec0bb738c5394eec4f9faf6effa984a88f89422c1e12e7b14b74`
+
+A word on `ListSet`, since a reader may suspect that it smuggles
+something in. It does not: it is used for the type notation alone,
+in the signatures of `derivable` and `refutable`, and `set A` is by
+definition `list A`. No function of the module — `set_add`, `set_mem`,
+`set_union` and the rest — occurs anywhere in the file, and none of
+its decidability requirements is ever discharged. Two `grep` commands
+establish this. The set-like reading of contexts is therefore
+*nominal* here, never operational: no normalisation of contexts takes
+place behind the notation, hence no hidden Contraction. The
+multiplicative file reaches the same point by the other route, stating
+set-like identity as a membership equivalence (`Set_eq`) rather than
+as a data structure.
+
+## Adequacy: the multiplicative certifications
+
+The certification above reads the left implication rule L→ *additively*
+(shared context). A referee may reasonably ask whether that reading is
+what makes the result go through — that is, whether the encoding is
+faithful to Core Logic ℂ rather than to a convenient neighbour of it.
+It is not, and the question is settled mechanically rather than
+argumentatively: the same statements are reconstructed under the
+*multiplicative* reading of L→, with set-like contexts and no
+monotonicity lemma whatsoever.
+
+| File | System | SHA256 |
+|---|---|---|
+| `core_logic_F_multiplicative.v` | Coq 8.18, `List` only | `14c0aeca079cbceca344be0623e6fa3a97fa7316619e2983f2a437c61908005b` |
+| `core_logic_F_multiplicative.lean` | Lean 4, no import at all | `1922f494af6a1e7ad12d229d9d4a0055d8756378b70b4381ec23bace3e78fff3` |
+| `Challenge_multiplicative.lean` | Lean 4, fifteen statements left as `sorry` | `c59f827350ecc5bbff859d5b2d408608aa98fb5de2fff70cc6b60c17de01d9ee` |
+
+To check that the file you compile is the file cited:
+
+```
+sha256sum core_logic_F_multiplicative.v \
+          core_logic_F_multiplicative.lean \
+          Challenge_multiplicative.lean
+```
+
+The structural choices are stated in the header of each file:
+reflexivity at the singleton `[A] ⊢ A`, so no diluted `Ax`; left rules
+with split contexts, the principal formula being consumed and the
+premiss contexts being pieces of the conclusion's; and set-like
+identity of contexts given by a membership *equivalence* (`Set_eq`),
+not by a monotonicity rule — which makes Exchange and Contraction
+pointless, in accordance with Tennant's own sequents. As in the
+additive file, each theorem ends with `Print Assumptions` reporting
+`Closed under the global context`, and no `exfalso` occurs.
+
+### How to check the multiplicative pair
+
+For Coq:
+
+```
+coqc core_logic_F_multiplicative.v
+```
+
+For Lean, in the browser, with nothing to install: open
+[comparator.live.lean-lang.org](https://comparator.live.lean-lang.org),
+paste `Challenge_multiplicative.lean` as the challenge and
+`core_logic_F_multiplicative.lean` as the solution. The additive pair
+is checked the same way, with `Challenge.lean` and
+`core_logic_is_not_paraconsistent.lean`.
+
+Unlike the additive pair, the multiplicative one has not been run
+through the local two-kernel procedure described in the next section,
+and this repository therefore ships no `config.json` for it. The
+distinction is deliberate: what is claimed here is what has been
+checked, and nothing more.
+
+Three points make the two readings converge on the result:
+
+1. **L→ is neutral here.** The multiplicative and additive readings
+   coincide at every point at which the proof uses the rule: in both
+   DNS cases the context is empty (Γ = ∅), so no split arises.
+2. **R→ requires the additive reading, and Tennant requires it too.**
+   Fidelity to ℂ demands vacuous discharge — Tennant's own diamond
+   notation ◇ (*Core Logic*, 2017, pp. 159–163). This is not a
+   concession to the encoding but a feature of ℂ.
+3. **Nothing is smuggled in through the contexts.** The additive file
+   uses `context_monotonicity` for bookkeeping only — to relocate a
+   formula in a context, never as Weakening or Cut. The multiplicative
+   file dispenses with it entirely, and closes with the theorem
+   `no_dilution`: in that presentation weakening is not merely unused,
+   it is unavailable.
+
+Taken together, the two presentations bracket the fragment:
+`multiplicative ⊆ ℱ_ℂ ⊆ additive`. The result holds at both bounds,
+hence at every reading in between. No choice of structural convention
+can be what produces `claim1_false`.
+
 ## Lean 4 — Comparator certification (gold standard)
 
 This repository lets anyone re-verify the Lean proof that Core Logic is
@@ -97,6 +190,9 @@ kernels — Lean's own and nanoda.
 
 Challenge SHA256:
 `6147a4234a2420a420d2c67eb145ace7b3d9ec14fc1e2dc368c35010e54804cc`
+
+Solution SHA256 (identical to `core_logic_is_not_paraconsistent.lean`):
+`acddd04c222a9958aca2a998849e24b0b94b17c876e7ff3da832f6ac437701e1`
 
 ### Prerequisites
 
@@ -177,3 +273,30 @@ without any installation on
 is stated in its header: corroboration, not certification — proof
 *search* exhibits witnesses; the three certifications above check
 proofs.
+
+## Interactive verification in the browser
+
+Every Coq file in this repository is also served as a self-contained
+waCoq page on [coq.vidal-rosset.net](https://coq.vidal-rosset.net):
+the source is embedded inline in the page, the proof runs in the
+browser (`Alt+↓` to step forward), and no installation is required.
+
+`wacoq-pages.sh` — the shell script that generates and updates those
+pages — is included here for reproducibility. From a directory
+containing the `.v` files:
+
+```
+bash wacoq-pages.sh
+```
+
+It produces one standalone `.html` per `.v` file, each with the Coq
+source inlined in a `<textarea>`, a fixed `backend: 'wa'`, and a
+navigation bar cross-linking the whole set (current page in bold). It
+deliberately omits `file_dialog` and `data-filename`: the earlier
+`?fn=` mechanism raced against the scratchpad's `localStorage`
+restoration and could open on an empty editor. Legacy `?fn=X.v` URLs
+are redirected `301` to the corresponding `X.html`.
+
+The waCoq installation is intentionally frozen at 0.16.0 (Coq 8.16).
+These pages are certification artefacts, not a playground: their value
+is that they will still run, unchanged, years from now.
