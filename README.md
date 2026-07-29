@@ -226,14 +226,6 @@ structural conventions. It behaves as Tennant's negation behaves,
 neither more nor less, and no discrepancy remains for an inadequacy
 objection to exploit.
 
-The file is replayable in the browser as
-[**Negation adequacy**](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/negation_adequacy_standalone.html),
-whose source `negation_adequacy_standalone.v` carries the same three
-theorems above a prelude copied verbatim from the appendix — the
-language, the five rules and `absurdity_core`, nothing else — so that
-they can be checked without recompiling all of it. The header of that
-file records which lines were copied and from which SHA256.
-
 SHA256:
 `936f17b6af704be505e742bd160ad8769bd9c0f2a0297328bd8050eade951239`
 
@@ -250,6 +242,50 @@ If invoked from elsewhere, bind the load path explicitly:
 
 It ends with one `Print Assumptions` per theorem, each of which must
 report `Closed under the global context`.
+
+**Testing the encoding rather than defending it.**
+`negation_adequacy_standalone.v` — replayable in the browser as
+[**Negation adequacy**](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/negation_adequacy_standalone.html)
+— carries those three theorems above a prelude copied verbatim from
+the appendix, and then does something the supplement does not: it
+perturbs the encoding. Each part adds to the calculus the negation
+rule an objector would want, and reports what becomes of the result.
+Everything in it is checked, with no axiom.
+
+- **A right rule for negation, shaped like R→ℂ.** Give ℂ an
+  introduction rule for negation with the same permission to discharge
+  vacuously that R→ℂ enjoys, and the result is not weakened but
+  *refuted*: `explosion_to_neg` derives `A, ¬A ⊢ ¬B` for every fresh
+  `B`. So the primitivity of negation is doing real work.
+- **The obligatory discharge is not a rule.** Tennant blocks that by
+  requiring the discharge in R¬ to be non-vacuous. Rendered by its
+  natural side condition — the contradiction must not already be
+  available without the discharged assumption — Coq rejects the
+  definition: *non strictly positive occurrence*. The clause consults
+  the non-derivability of the very relation it defines, so it has no
+  least fixed point to denote. It is not a rule of a calculus but a
+  filter on derivations already built.
+- **Stratified, it works.** Close the calculus first, then impose the
+  condition from outside, and the result survives:
+  `no_explosion_survives_obligatory_discharge`. The price is the one
+  just diagnosed — the constraint is metatheoretic.
+- **Defined negation collapses into minimal logic.** Read `¬B` as
+  `B → ⊥` with `⊥` an uninterpreted atom, the only honest way to add
+  it to a calculus that has none, and `¬A, A ⊢ ¬B` becomes derivable
+  by L→, Ax and R→ alone — in ℱ_𝐌, without any Core rule
+  (`defined_negation_explodes_in_minimal`).
+
+Two things follow, and they are worth stating together. First, the
+objection that this encoding of negation is unfaithful has been
+answered by experiment rather than by argument: the alternatives an
+objector might propose have been built, and each is either refuted or
+purchased at a stated price. Second, the constraint that Tennant needs
+on negation is *multiplicative* — consuming the discharged assumption
+is automatic where contexts are split — while the licence he grants
+himself on implication, the vacuous discharge written ◇, is
+*additive*. He is thus relevantist about ¬ and permissive about →,
+and it is that asymmetry, not a claim about what negation ultimately
+is, that the paper exploits.
 
 **What this does not settle.** All of the above holds relative to ℱ.
 A reader may still ask whether, in ℂ taken whole — with conjunction,
@@ -395,7 +431,7 @@ pages, cross-linked by a common navigation bar:
 |---|---|
 | [Additive certification](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_logic_is_not_paraconsistent.html) | the reference source, twelve theorems |
 | [Multiplicative certification](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_logic_F_multiplicative.html) | the weakening-free reconstruction, closing on `no_dilution` |
-| [Negation adequacy](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/negation_adequacy_standalone.html) | `no_explosion_to_neg` and its two controls |
+| [Negation adequacy](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/negation_adequacy_standalone.html) | Part I plus the four adequacy experiments |
 | [Fragment F](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_step1_fragment_F.html) | the language and the five rules |
 | [DNS.1 and DNS.2](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_step2_dns1_dns2.html) | step 1: both rules are derivable in ℱ |
 | [Invertibility](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_step3_invertibility.html) | step 2: DNS.1 is invertible at the decisive instance |
