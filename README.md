@@ -1,7 +1,9 @@
 # Core Logic is not paraconsistent — Version 6
 
 Machine-checked companion to the paper *A Proof in Coq that Core Logic
-is not Paraconsistent* (arXiv:2606.05953). Refutation-system version.
+is not Paraconsistent*
+([arXiv:2606.05953](https://arxiv.org/abs/2606.05953)).
+Refutation-system version.
 
 The argument, in one paragraph. DNS.1 is a derivable rule of the
 fragment ℱ under both of its readings, and it is *invertible* at the
@@ -54,6 +56,9 @@ only on the standard library (`List`, `ListSet`). To check:
 ```
 coqc core_logic_is_not_paraconsistent.v
 ```
+
+Or, with nothing to install, step through it in the browser:
+[**Additive certification**](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_logic_is_not_paraconsistent.html).
 
 The file ends with one `Print Assumptions` per theorem: each must
 report `Closed under the global context` (the two final theorems
@@ -119,6 +124,9 @@ For Coq:
 coqc core_logic_F_multiplicative.v
 ```
 
+or in the browser:
+[**Multiplicative certification**](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_logic_F_multiplicative.html).
+
 For Lean, in the browser, with nothing to install: open
 [comparator.live.lean-lang.org](https://comparator.live.lean-lang.org),
 paste `Challenge_multiplicative.lean` as the challenge and
@@ -153,10 +161,112 @@ Taken together, the two presentations bracket the fragment:
 hence at every reading in between. No choice of structural convention
 can be what produces `claim1_false`.
 
+## Adequacy: negation
+
+The structural objection answered above has a companion: that the
+treatment of negation is not Tennant's. It divides into two questions,
+and the first dissolves once three levels are kept apart.
+
+**Where the contraposition lives.** anti-DNS.1 is obtained by
+contraposing the invertibility of DNS.1, and a reader may ask by which
+rule — since ℱ has no right-introduction rule for negation. By none:
+the contraposition does not take place in ℱ at all. Three levels are
+in play. The *object language* is ℱ: five rules, `Neg` primitive,
+no ⊥, absurdity carried by the empty succedent (`None`) as in
+Tennant's own sequents. The *refutation system* is the level of
+antisequents, `derivable f Γ C -> False`, in the sense of Łukasiewicz,
+Tiomkin (1988) and Goranko (1994); anti-DNS.1 is a rule of that
+system, not of ℂ. The contraposition is then a metalevel modus
+ponens, discharged in three tactics in `anti_DNS1_holds_in_ℱ_M`.
+Requiring it to pass through a rule of ℂ would be requiring a
+metatheorem to be derived inside the calculus it describes.
+
+What follows is worth stating plainly, because it disposes of the
+objection rather than merely deflecting it: **negation does no work in
+the argument.** `DNS1_in_ℱ` uses `L_arrow`, `R_arrow` and `Ax` — not
+even `L_neg` — and `Neg (Var a)` crosses the derivation as an inert
+passenger. The decisive instance is then reached in ℱ_ℂ by
+`R_arrow_core`. The whole chain turns on the implication rules, and on
+R→ℂ in particular; ℱ contains no rule for introducing a negation, so
+tightening such a rule, or deleting it, changes nothing here.
+
+**What the encoding of negation certifies.**
+`negation_adequacy_supplement.v` adds one fact about the frozen
+appendix, which it imports as a module without modifying it — the
+dependency runs one way, and the appendix SHA256 is untouched.
+
+The objection it answers is this. Tennant's Table 1 gives no
+right-introduction rule for negation: negation is governed on the left
+only (L¬), whose discharge leads to the empty succedent, never to a
+negated conclusion. The encoding transcribes this exactly, with
+`L_neg` and no `R_neg`, and `Neg` as a primitive constructor — there
+is no ⊥ in the object language and no definition `¬A := A → ⊥`. A
+critic may then suspect that such an encoding misrepresents ℂ, and
+there are only two ways it could: by proving too much about negation,
+or by proving too little. Both are closed:
+
+- **Too much.** `no_explosion_to_neg` — in the strong reading
+  `core_logic`, from the inconsistent context `A, ¬A` the sequent
+  `A, ¬A ⊢ ¬B` is *not* derivable for a fresh atom `B`. A negated
+  succedent can arise only by `Ax`, with `¬B` already in the context,
+  or by `L_arrow`, from an implication in the context; the
+  inconsistent context affords neither. So the encoded negation does
+  not explode.
+- **Too little.** `contradiction_is_derivable` — the contradiction
+  itself, `A, ¬A ⊢` with empty succedent, *is* derivable. The
+  theorem above is therefore not vacuously true: the objection's own
+  premiss is genuinely available in the system.
+- **The boundary.** `reflexive_neg_only` — the one negative
+  conclusion that *is* reachable is the trivial reflexive one, `¬A`
+  already present, by `Ax`. Membership, not explosion.
+
+The three together pin the encoded negation between an upper and a
+lower bound, as the multiplicative and additive readings pin the
+structural conventions. It behaves as Tennant's negation behaves,
+neither more nor less, and no discrepancy remains for an inadequacy
+objection to exploit.
+
+The file is replayable in the browser as
+[**Negation adequacy**](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/negation_adequacy_standalone.html),
+whose source `negation_adequacy_standalone.v` carries the same three
+theorems above a prelude copied verbatim from the appendix — the
+language, the five rules and `absurdity_core`, nothing else — so that
+they can be checked without recompiling all of it. The header of that
+file records which lines were copied and from which SHA256.
+
+SHA256:
+`936f17b6af704be505e742bd160ad8769bd9c0f2a0297328bd8050eade951239`
+
+It compiles after the appendix, which must be compiled first. From the
+directory holding both files:
+
+```
+coqc core_logic_is_not_paraconsistent.v
+coqc negation_adequacy_supplement.v
+```
+
+If invoked from elsewhere, bind the load path explicitly:
+`coqc -Q <dir> "" <dir>/negation_adequacy_supplement.v`.
+
+It ends with one `Print Assumptions` per theorem, each of which must
+report `Closed under the global context`.
+
+**What this does not settle.** All of the above holds relative to ℱ.
+A reader may still ask whether, in ℂ taken whole — with conjunction,
+disjunction and the rest — the premiss sequent might become derivable,
+which would touch the invertibility. That question is legitimate, and
+no supplement here closes it. It is, however, a question about the
+choice of fragment rather than about negation, and it bears equally on
+both readings: the absent rules are absent for ℱ_𝐌 and ℱ_ℂ alike, and
+ℱ is closed under the connectives it does contain. The claim made in
+this repository is correspondingly precise — that the two commitments
+of Core Logic are jointly untenable already in ℱ — and a fragment is
+all that an inconsistency needs.
+
 ## Lean 4 — Comparator certification (gold standard)
 
 This repository lets anyone re-verify the Lean proof that Core Logic is
-not paraconsistent (refutation-system version, the arXiv/AJL appendix
+not paraconsistent (refutation-system version, the arXiv appendix
 file) with the Lean **Comparator**, at the "gold standard" of the Lean
 reference manual: the candidate solution is checked against a
 *trusted challenge* and replayed through two independently implemented
@@ -275,27 +385,45 @@ proofs.
 
 ## Interactive verification in the browser
 
-Every Coq file in this repository is also served as a self-contained
-waCoq page on [coq.vidal-rosset.net](https://coq.vidal-rosset.net):
-the source is embedded inline in the page, the proof runs in the
-browser (`Alt+↓` to step forward), and no installation is required.
+Every Coq file here is also served as a self-contained waCoq page: the
+source is embedded inline, the proof runs in the browser (`Alt+↓` and
+`Alt+↑` to step forward and back, `Alt+Enter` to run to the cursor,
+`F8` for the goal panel), and nothing needs to be installed. Eight
+pages, cross-linked by a common navigation bar:
 
-`wacoq-pages.sh` — the shell script that generates and updates those
-pages — is included here for reproducibility. From a directory
-containing the `.v` files:
+| Page | What it runs |
+|---|---|
+| [Additive certification](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_logic_is_not_paraconsistent.html) | the reference source, twelve theorems |
+| [Multiplicative certification](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_logic_F_multiplicative.html) | the weakening-free reconstruction, closing on `no_dilution` |
+| [Negation adequacy](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/negation_adequacy_standalone.html) | `no_explosion_to_neg` and its two controls |
+| [Fragment F](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_step1_fragment_F.html) | the language and the five rules |
+| [DNS.1 and DNS.2](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_step2_dns1_dns2.html) | step 1: both rules are derivable in ℱ |
+| [Invertibility](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_step3_invertibility.html) | step 2: DNS.1 is invertible at the decisive instance |
+| [anti-DNS.1](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_step4_antidns.html) | step 3: the refutation rule and its Ł-correctness |
+| [Contradiction](https://vidal-rosset.net/wacoq/node_modules/wacoq/examples/core_step5_contradiction.html) | step 4: `claim1_false` |
+
+`wacoq-pages.sh`, the shell script that generates them, is included
+here for reproducibility. It is run from the directory holding the
+`.v` files, and takes one `file::label` pair per page:
 
 ```
-bash wacoq-pages.sh
+./wacoq-pages.sh \
+  "core_logic_is_not_paraconsistent.v::Additive certification" \
+  "core_logic_F_multiplicative.v::Multiplicative certification" \
+  "negation_adequacy_standalone.v::Negation adequacy" \
+  ...
 ```
 
-It produces one standalone `.html` per `.v` file, each with the Coq
-source inlined in a `<textarea>`, a fixed `backend: 'wa'`, and a
-navigation bar cross-linking the whole set (current page in bold). It
-deliberately omits `file_dialog` and `data-filename`: the earlier
-`?fn=` mechanism raced against the scratchpad's `localStorage`
+All pages must be listed in a single call, since the navigation bar of
+each is built from the argument list. Every page carries the Coq
+source inlined in a `<textarea>` and a fixed `backend: 'wa'`; it
+deliberately omits `file_dialog` and `data-filename`, because the
+earlier `?fn=` mechanism raced against the scratchpad's `localStorage`
 restoration and could open on an empty editor. Legacy `?fn=X.v` URLs
 are redirected `301` to the corresponding `X.html`.
 
-The waCoq installation is intentionally frozen at 0.16.0 (Coq 8.16).
-These pages are certification artefacts, not a playground: their value
-is that they will still run, unchanged, years from now.
+These pages are generated from the `.v` files, and are not the
+certified artefacts: if a source changes, the page must be regenerated
+or it will silently fall behind. The waCoq installation is
+intentionally frozen at 0.16.0 (Coq 8.16) — the pages are meant to
+still run, unchanged, years from now.
