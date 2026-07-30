@@ -230,9 +230,23 @@ the minimal reading it is *proved* (`anti_DNS1_holds_in_ℱ_M`, with
 there being ordinary reasoning about underivability, which is what
 Ł-correctness consists in. Under the Core reading it is *assumed*:
 `anti_DNS1_rule_for_ℂ` is an antecedent of `claim1_false`. Nothing
-whatever is asserted of ℂ. And negation does no work in the argument:
-`DNS1_in_ℱ` uses `L_arrow`, `R_arrow` and `Ax` — not even `L_neg` —
-with `Neg (Var a)` crossing the derivation as an inert passenger.
+whatever is asserted of ℂ.
+
+Negation enters the argument at exactly one point, and through the one
+rule Table 1 supplies for it. In `absurdity_core`, the axiom `A ⊢ A`
+becomes `¬A, A ⊢` by `L_neg`, which introduces the negation on the
+left and empties the succedent — the sequent without which
+`R_arrow_core` would have nothing to discharge. Everything after
+that is implicational: `DNS2_instantiated` reaches the decisive
+sequent by `L_arrow`, `R_arrow_core` and `Ax`, with `Neg (Var a)`
+crossing it in the context, transported unchanged, never a principal
+formula. (`DNS1_in_ℱ`, the uniform version of the rule, plays no part
+here: its antecedent `A, ¬A ⊢ B` is exactly what Claim 1 denies, and
+it is invoked nowhere in the file. The Core route to the decisive
+sequent runs through the empty succedent instead.) So the chain turns
+on the implication rules, `R→ℂ` above all, and on the single left rule
+for negation — and there is no right rule for negation to tighten, to
+weaken, or to accuse.
 
 The second half is answered by two files.
 `negation_adequacy_supplement.v` imports the frozen appendix as a
