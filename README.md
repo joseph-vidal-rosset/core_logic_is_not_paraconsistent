@@ -2,7 +2,10 @@
 
 Machine-checked companion to the note *Core Logic is not
 paraconsistent: one proof, six certifications*
-([arXiv:2606.05953](https://arxiv.org/abs/2606.05953)).
+([arXiv:2606.05953](https://arxiv.org/abs/2606.05953)). An [HTML
+version](https://vidal-rosset.net/2026-05-01-core-logic-is-not-paraconsistent.html)
+is available, from which every certification below can be run in the
+browser without leaving the exposition.
 
 **The argument, in one paragraph.** DNS.1 is a derivable rule of the
 fragment ℱ under both of its readings, and it is *invertible* at the
